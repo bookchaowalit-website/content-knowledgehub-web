@@ -18,52 +18,25 @@ interface Entry {
 
 const contentDirectory = path.join(process.cwd(), 'content');
 
+const CATEGORIES = ['diary', 'knowledge', 'docs', 'ideas'];
+
+/** Read one entry. The folder is the source of truth for its category, whatever the frontmatter says. */
+function readEntry(category: string, slug: string): Entry {
+  const fileContents = fs.readFileSync(path.join(contentDirectory, category, `${slug}.mdx`), 'utf8');
+  const { content, data } = matter(fileContents);
+  return { slug, frontmatter: { ...(data as Frontmatter), category }, content };
+}
+
+function readCategory(category: string): Entry[] {
+  const categoryPath = path.join(contentDirectory, category);
+  if (!fs.existsSync(categoryPath)) return [];
+  return fs.readdirSync(categoryPath)
+    .filter((file) => file.endsWith('.mdx'))
+    .map((file) => readEntry(category, file.replace(/\.mdx$/, '')));
+}
+
 export function getEntries(category?: string): Entry[] {
-  const entries: Entry[] = [];
-
-  if (category) {
-    const categoryPath = path.join(contentDirectory, category);
-    if (!fs.existsSync(categoryPath)) return entries;
-
-    const files = fs.readdirSync(categoryPath);
-    files.forEach((file) => {
-      if (file.endsWith('.mdx')) {
-        const slug = file.replace('.mdx', '');
-        const fullPath = path.join(categoryPath, file);
-        const fileContents = fs.readFileSync(fullPath, 'utf8');
-        const { content, data } = matter(fileContents);
-
-        entries.push({
-          slug,
-          frontmatter: data as Frontmatter,
-          content
-        });
-      }
-    });
-  } else {
-    const categories = ['diary', 'knowledge', 'docs', 'ideas'];
-    categories.forEach((cat) => {
-      const categoryPath = path.join(contentDirectory, cat);
-      if (!fs.existsSync(categoryPath)) return;
-
-      const files = fs.readdirSync(categoryPath);
-      files.forEach((file) => {
-        if (file.endsWith('.mdx')) {
-          const slug = file.replace('.mdx', '');
-          const fullPath = path.join(categoryPath, file);
-          const fileContents = fs.readFileSync(fullPath, 'utf8');
-          const { content, data } = matter(fileContents);
-
-          entries.push({
-            slug,
-            frontmatter: data as Frontmatter,
-            content
-          });
-        }
-      });
-    });
-  }
-
+  const entries = category ? readCategory(category) : CATEGORIES.flatMap(readCategory);
   return entries.sort((a, b) => {
     if (a.frontmatter.date && b.frontmatter.date) {
       return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
@@ -73,18 +46,9 @@ export function getEntries(category?: string): Entry[] {
 }
 
 export function getEntryBySlug(category: string, slug: string): Entry | null {
-  const fullPath = path.join(contentDirectory, category, `${slug}.mdx`);
-
-  if (!fs.existsSync(fullPath)) return null;
-
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const { content, data } = matter(fileContents);
-
-  return {
-    slug,
-    frontmatter: data as Frontmatter,
-    content
-  };
+  if (!CATEGORIES.includes(category)) return null;
+  if (!fs.existsSync(path.join(contentDirectory, category, `${slug}.mdx`))) return null;
+  return readEntry(category, slug);
 }
 
 export function getAllEntries(): Entry[] {
@@ -109,6 +73,5 @@ export async function searchEntries(query: string): Promise<Entry[]> {
 }
 
 export function getCategories(): string[] {
-  const categories = ['diary', 'knowledge', 'docs', 'ideas'];
-  return categories.filter(cat => fs.existsSync(path.join(contentDirectory, cat)));
+  return CATEGORIES.filter(cat => fs.existsSync(path.join(contentDirectory, cat)));
 }

@@ -39,3 +39,14 @@ test('public content is searchable and diary publication has an explicit manual 
   assert.match(policy.content, /owner review/i);
   assert.match(policy.content, /private diar/i);
 });
+test('every entry carries the category of its folder, so home links resolve', () => {
+  const all = getEntries();
+  assert.equal(all.length, ['diary', 'knowledge', 'docs', 'ideas'].reduce((n, c) => n + getEntries(c).length, 0));
+  for (const entry of all) {
+    assert.ok(['diary', 'knowledge', 'docs', 'ideas'].includes(entry.frontmatter.category), entry.slug);
+    assert.ok(getEntryBySlug(entry.frontmatter.category, entry.slug), `${entry.frontmatter.category}/${entry.slug}`);
+  }
+  for (const category of ['knowledge', 'docs', 'ideas']) {
+    assert.ok(all.filter(entry => entry.frontmatter.category === category).length >= 3, category);
+  }
+});

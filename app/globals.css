@@ -71,3 +71,18 @@ button { color: inherit; }
   .entry-copy small { white-space: normal; line-height: 1.35; }
   .archive-footer { display: block; line-height: 2; }
 }
+
+/* Entry bodies are rendered Markdown inside .prose, and the typography plugin is not installed:
+   give headings, paragraphs, lists and code blocks their own rhythm, and keep code inside the card. */
+.prose { overflow-wrap: break-word; line-height: 1.7; }
+.prose > * + * { margin-top: 1em; }
+.prose h1, .prose h2, .prose h3 { font-weight: 700; line-height: 1.25; margin-top: 1.6em; }
+.prose h1 { font-size: 1.6rem; }
+.prose h2 { font-size: 1.35rem; }
+.prose h3 { font-size: 1.15rem; }
+.prose ul { list-style: disc; padding-left: 1.4em; }
+.prose ol { list-style: decimal; padding-left: 1.4em; }
+.prose a { text-decoration: underline; }
+.prose pre { overflow-x: auto; max-width: 100%; padding: 0.9em 1em; border-radius: 6px; background: #f3f4f6; font-size: 0.85rem; line-height: 1.5; }
+.prose code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+@media (max-width: 640px) { article.p-8 { padding: 1.25rem; } }
