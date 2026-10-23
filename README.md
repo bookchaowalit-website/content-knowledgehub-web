@@ -2,6 +2,8 @@
 
 A curated public technical reading room built with Next.js, Markdown entries and Tailwind CSS. The content is authored for public use, with synthetic examples and explicit source links.
 
+Live: https://knowledgehub.bookchaowalit.com — 12 entries, three per shelf. Product truth and limits: [PRODUCT.md](PRODUCT.md).
+
 ## Features
 
 - **Content Organization**: Categorized content (Diary, Knowledge, Docs, Ideas)
@@ -60,7 +62,6 @@ tags: [tag1, tag2, category]
 
 ### MCP API
 
-- `GET /api/mcp` - Get API info
 - `POST /api/mcp` - Access MCP tools
 
 #### Available Methods
@@ -126,25 +127,9 @@ npm start
 
 ## Deployment
 
-### Vercel (Recommended)
-
-1. Push your code to a Git repository
-2. Connect to Vercel
-3. Deploy automatically
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-```
-
-### Other Platforms
-
-- **Netlify**: Works with static export
-- **GitHub Pages**: Requires static export configuration
-- **Docker**: Can be containerized with Node.js
+The live site is the Vercel project `bookchaowalit-knowledgehub-frontend`, deployed with the Vercel CLI. That project is still
+linked to the repository's old name, so pushes to `main` run CI (lint, typecheck, tests, build, security scan) but do not
+deploy. Never deploy from CI; the owner reconnects Vercel Git (D9) or approves a CLI deploy.
 
 ## Environment Variables
 
