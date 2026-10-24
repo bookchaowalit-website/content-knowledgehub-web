@@ -1,5 +1,6 @@
 # Deploy verification (ADR-0003, D3). Vercel deploys main through its Git integration and reports a
-# GitHub deployment status; when the Production deployment succeeds, smoke-check the live site and
+# GitHub deployment status (environment "Production", or "Production – <project>" when the repository
+# was linked to more than one Vercel project); when the Production deployment succeeds, smoke-check the live site and
 # check that it runs the deployed commit. Read-only: no secrets, no deploy rights.
 name: Deploy smoke
 
@@ -20,7 +21,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.deployment_status.state == 'success' &&
-       github.event.deployment.environment == 'Production')
+       startsWith(github.event.deployment.environment, 'Production'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
