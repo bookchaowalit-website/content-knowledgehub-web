@@ -1,0 +1,36 @@
+# Deploy verification (ADR-0003, D3). Vercel deploys main through its Git integration and reports a
+# GitHub deployment status; when the Production deployment succeeds, smoke-check the live site and
+# check that it runs the deployed commit. Read-only: no secrets, no deploy rights.
+name: Deploy smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-smoke
+  cancel-in-progress: true
+
+jobs:
+  deploy-smoke:
+    name: Production smoke (knowledgehub.bookchaowalit.com)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Smoke-check the production site
+        env:
+          # The deployed commit; a manual run checks that production runs the head of the branch.
+          EXPECTED_SHA: ${{ github.event.deployment.sha || github.sha }}
+        run: bash scripts/deploy-smoke.sh https://knowledgehub.bookchaowalit.com "$EXPECTED_SHA"
