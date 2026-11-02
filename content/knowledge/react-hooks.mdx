@@ -59,7 +59,7 @@ function DataFetcher() {
 Accesses React context.
 
 ```javascript
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 const ThemeContext = createContext();
 
@@ -216,19 +216,24 @@ function useFetch(url) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Abort the previous request when url changes, so a late response cannot overwrite newer data.
+    const controller = new AbortController();
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
         const json = await response.json();
         setData(json);
       } catch (err) {
-        setError(err);
+        if (err.name !== 'AbortError') setError(err);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchData();
+    return () => controller.abort();
   }, [url]);
 
   return { data, loading, error };
@@ -237,9 +242,8 @@ function useFetch(url) {
 
 ## Related Topics
 
-- [React Components](/wiki/react-components)
-- [State Management](/wiki/state-management)
-- [React Context](/wiki/react-context)
+- [JavaScript Basics](/knowledge/javascript-basics)
+- [Design Patterns](/knowledge/design-patterns)
 
 ## Further Reading
 

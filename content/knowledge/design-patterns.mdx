@@ -74,7 +74,7 @@ button.render();
 ### Adapter Pattern
 Converts the interface of a class into another interface clients expect.
 
-```javascript
+```typescript
 class LegacyRectangle {
   constructor(width, height) {
     this.width = width;
@@ -106,7 +106,7 @@ class RectangleAdapter implements ModernRectangle {
 ### Decorator Pattern
 Attaches additional responsibilities to an object dynamically.
 
-```javascript
+```typescript
 interface Coffee {
   cost(): number;
   description(): string;
@@ -155,7 +155,7 @@ console.log(coffee.cost()); // 1.5
 ### Observer Pattern
 Defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified.
 
-```javascript
+```typescript
 class Subject {
   private observers: Observer[] = [];
 
@@ -196,7 +196,7 @@ subject.notify("Hello, observers!");
 ### Strategy Pattern
 Defines a family of algorithms, encapsulates each one, and makes them interchangeable.
 
-```javascript
+```typescript
 interface PaymentStrategy {
   pay(amount: number): void;
 }
@@ -315,9 +315,8 @@ function processUsers(users) {
 
 ## Related Topics
 
-- [Clean Code](/wiki/clean-code)
-- [Software Architecture](/wiki/software-architecture)
-- [SOLID Principles](/wiki/solid-principles)
+- [JavaScript Basics](/knowledge/javascript-basics)
+- [React Hooks](/knowledge/react-hooks)
 
 ## Further Reading
 
