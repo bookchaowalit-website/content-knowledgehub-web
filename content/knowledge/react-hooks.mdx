@@ -51,7 +51,7 @@ function DataFetcher() {
   }, []); // Empty array means run once on mount
 
   if (loading) return <div>Loading...</div>;
-  return <div>Data: {data}</div>;
+  return <pre>{JSON.stringify(data, null, 2)}</pre>;
 }
 ```
 
@@ -223,6 +223,7 @@ function useFetch(url) {
       setError(null);
       try {
         const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const json = await response.json();
         setData(json);
       } catch (err) {

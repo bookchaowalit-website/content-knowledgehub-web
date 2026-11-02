@@ -76,12 +76,15 @@ Converts the interface of a class into another interface clients expect.
 
 ```typescript
 class LegacyRectangle {
-  constructor(width, height) {
+  width: number;
+  height: number;
+
+  constructor(width: number, height: number) {
     this.width = width;
     this.height = height;
   }
 
-  area() {
+  area(): number {
     return this.width * this.height;
   }
 }
