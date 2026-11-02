@@ -1,0 +1,128 @@
+---
+title: "JavaScript Basics"
+description: "Core JavaScript syntax: variables, types, functions, objects, arrays and control flow."
+date: "2024-03-10"
+tags: ["javascript", "web-development", "programming-basics"]
+---
+
+# JavaScript Fundamentals
+
+JavaScript is a versatile programming language primarily used for web development. It enables interactive web pages and is an essential part of web applications.
+
+## Variables and Data Types
+
+### Primitive Types
+- **String**: Textual data
+- **Number**: Numeric values
+- **Boolean**: True/False values
+- **Undefined**: Variable declared but not assigned
+- **Null**: Intentional absence of value
+- **Symbol**: Unique identifiers
+
+### Reference Types
+- **Objects**: Key-value pairs
+- **Arrays**: Ordered collections
+- **Functions**: Reusable code blocks
+
+```javascript
+// Variables
+let name = "John";
+const age = 30;
+var isStudent = true;
+
+// Objects
+const person = {
+  name: "John",
+  age: 30,
+  hobbies: ["reading", "coding"]
+};
+
+// Arrays
+const numbers = [1, 2, 3, 4, 5];
+```
+
+## Functions
+
+### Function Declaration
+```javascript
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+```
+
+### Arrow Functions
+```javascript
+const add = (a, b) => a + b;
+const multiply = (x, y) => {
+  return x * y;
+};
+```
+
+## Control Flow
+
+### Conditional Statements
+```javascript
+// If-Else
+if (age >= 18) {
+  console.log("Adult");
+} else {
+  console.log("Minor");
+}
+
+// Ternary
+const status = age >= 18 ? "Adult" : "Minor";
+```
+
+### Loops
+```javascript
+// For loop
+for (let i = 0; i < 5; i++) {
+  console.log(i);
+}
+
+// While loop
+let count = 0;
+while (count < 5) {
+  console.log(count);
+  count++;
+}
+
+// For...of (arrays)
+for (const num of numbers) {
+  console.log(num);
+}
+```
+
+## Error Handling
+
+```javascript
+try {
+  // Code that might throw an error
+  const result = riskyOperation();
+} catch (error) {
+  // Handle the error
+  console.error("Error occurred:", error);
+} finally {
+  // Always execute
+  console.log("Cleanup");
+}
+```
+
+## Best Practices
+
+1. Use `const` by default, `let` when reassignment is needed
+2. Use descriptive variable and function names
+3. Write modular, reusable code
+4. Add proper error handling
+5. Follow consistent code style
+
+## Related Topics
+
+- [DOM Manipulation](/wiki/dom-manipulation)
+- [Async Programming](/wiki/async-programming)
+- [ES6+ Features](/wiki/es6-features)
+
+## Further Reading
+
+- [MDN JavaScript Guide](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide)
+- [JavaScript.info Tutorial](https://javascript.info/)

@@ -1,0 +1,326 @@
+---
+title: "Design Patterns"
+description: "Creational, structural and behavioural patterns with short JavaScript examples."
+date: "2024-03-20"
+tags: ["design-patterns", "architecture", "best-practices"]
+---
+
+# Design Patterns
+
+Design patterns are well-established solutions to common problems in software design. They represent best practices evolved from the experiences of experienced object-oriented software developers.
+
+## Creational Patterns
+
+### Singleton Pattern
+Ensures a class has only one instance and provides a global point of access to it.
+
+```javascript
+class Singleton {
+  constructor() {
+    if (!Singleton.instance) {
+      this.data = "Initial data";
+      Singleton.instance = this;
+    }
+    return Singleton.instance;
+  }
+
+  getInstance() {
+    return this;
+  }
+}
+
+// Usage
+const instance1 = new Singleton();
+const instance2 = new Singleton();
+console.log(instance1 === instance2); // true
+```
+
+### Factory Pattern
+Creates objects without specifying the exact class of object that will be created.
+
+```javascript
+class Button {
+  render() {
+    console.log("Rendering a button");
+  }
+}
+
+class Checkbox {
+  render() {
+    console.log("Rendering a checkbox");
+  }
+}
+
+class GUIFactory {
+  static createComponent(type) {
+    switch (type) {
+      case 'button':
+        return new Button();
+      case 'checkbox':
+        return new Checkbox();
+      default:
+        throw new Error("Unknown component type");
+    }
+  }
+}
+
+// Usage
+const button = GUIFactory.createComponent('button');
+button.render();
+```
+
+## Structural Patterns
+
+### Adapter Pattern
+Converts the interface of a class into another interface clients expect.
+
+```javascript
+class LegacyRectangle {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+  }
+
+  area() {
+    return this.width * this.height;
+  }
+}
+
+interface ModernRectangle {
+  getArea(): number;
+}
+
+class RectangleAdapter implements ModernRectangle {
+  private legacyRectangle: LegacyRectangle;
+
+  constructor(width: number, height: number) {
+    this.legacyRectangle = new LegacyRectangle(width, height);
+  }
+
+  getArea(): number {
+    return this.legacyRectangle.area();
+  }
+}
+```
+
+### Decorator Pattern
+Attaches additional responsibilities to an object dynamically.
+
+```javascript
+interface Coffee {
+  cost(): number;
+  description(): string;
+}
+
+class SimpleCoffee implements Coffee {
+  cost() {
+    return 1;
+  }
+
+  description() {
+    return "Simple coffee";
+  }
+}
+
+abstract class CoffeeDecorator implements Coffee {
+  protected coffee: Coffee;
+
+  constructor(coffee: Coffee) {
+    this.coffee = coffee;
+  }
+
+  abstract cost(): number;
+  abstract description(): string;
+}
+
+class MilkDecorator extends CoffeeDecorator {
+  cost() {
+    return this.coffee.cost() + 0.5;
+  }
+
+  description() {
+    return this.coffee.description() + ", milk";
+  }
+}
+
+// Usage
+let coffee = new SimpleCoffee();
+coffee = new MilkDecorator(coffee);
+console.log(coffee.description()); // "Simple coffee, milk"
+console.log(coffee.cost()); // 1.5
+```
+
+## Behavioral Patterns
+
+### Observer Pattern
+Defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified.
+
+```javascript
+class Subject {
+  private observers: Observer[] = [];
+
+  attach(observer: Observer) {
+    this.observers.push(observer);
+  }
+
+  detach(observer: Observer) {
+    this.observers = this.observers.filter(o => o !== observer);
+  }
+
+  notify(message: string) {
+    this.observers.forEach(observer => observer.update(message));
+  }
+}
+
+interface Observer {
+  update(message: string): void;
+}
+
+class ConcreteObserver implements Observer {
+  update(message: string) {
+    console.log(`Received notification: ${message}`);
+  }
+}
+
+// Usage
+const subject = new Subject();
+const observer1 = new ConcreteObserver();
+const observer2 = new ConcreteObserver();
+
+subject.attach(observer1);
+subject.attach(observer2);
+
+subject.notify("Hello, observers!");
+```
+
+### Strategy Pattern
+Defines a family of algorithms, encapsulates each one, and makes them interchangeable.
+
+```javascript
+interface PaymentStrategy {
+  pay(amount: number): void;
+}
+
+class CreditCardPayment implements PaymentStrategy {
+  constructor(private cardNumber: string) {}
+
+  pay(amount: number) {
+    console.log(`Paid $${amount} with credit card ${this.cardNumber}`);
+  }
+}
+
+class PayPalPayment implements PaymentStrategy {
+  constructor(private email: string) {}
+
+  pay(amount: number) {
+    console.log(`Paid $${amount} with PayPal account ${this.email}`);
+  }
+}
+
+class ShoppingCart {
+  private items: { name: string; price: number }[] = [];
+  private paymentStrategy: PaymentStrategy;
+
+  constructor(paymentStrategy: PaymentStrategy) {
+    this.paymentStrategy = paymentStrategy;
+  }
+
+  addItem(name: string, price: number) {
+    this.items.push({ name, price });
+  }
+
+  checkout() {
+    const total = this.items.reduce((sum, item) => sum + item.price, 0);
+    this.paymentStrategy.pay(total);
+  }
+}
+
+// Usage
+const creditCardPayment = new CreditCardPayment("1234-5678-9012-3456");
+const cart = new ShoppingCart(creditCardPayment);
+cart.addItem("Book", 20);
+cart.addItem("Pen", 5);
+cart.checkout();
+```
+
+## Anti-Patterns to Avoid
+
+### God Object
+A single class that does everything.
+
+```javascript
+// Bad: God Object
+class Application {
+  constructor() {
+    this.user = new User();
+    this.database = new Database();
+    this.api = new API();
+    this.cache = new Cache();
+    this.security = new Security();
+    this.ui = new UI();
+    this.notifications = new Notifications();
+    this.analytics = new Analytics();
+  }
+}
+
+// Good: Separate concerns
+class User {}
+class Database {}
+class API {}
+// ... etc.
+```
+
+### Spaghetti Code
+Code that has a complex and tangled structure, making it hard to understand and maintain.
+
+```javascript
+// Bad: Spaghetti Code
+function processData(data) {
+  let result = [];
+  for (let i = 0; i < data.length; i++) {
+    if (data[i].type === 'user') {
+      if (data[i].active) {
+        if (data[i].profile) {
+          if (data[i].profile.role === 'admin') {
+            result.push({
+              id: data[i].id,
+              name: data[i].name,
+              role: data[i].profile.role
+            });
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
+// Good: Clear and modular
+function processUsers(users) {
+  return users
+    .filter(isActiveUser)
+    .filter(hasProfile)
+    .filter(hasAdminRole)
+    .map(mapToUserSummary);
+}
+```
+
+## Best Practices
+
+1. **Choose patterns wisely** - Don't overuse patterns
+2. **Understand the problem** - Patterns solve specific problems
+3. **Keep it simple** - Start simple, add complexity only when needed
+4. **Document your design** - Explain why you used a particular pattern
+5. **Test your implementation** - Ensure patterns work correctly
+
+## Related Topics
+
+- [Clean Code](/wiki/clean-code)
+- [Software Architecture](/wiki/software-architecture)
+- [SOLID Principles](/wiki/solid-principles)
+
+## Further Reading
+
+- [Gang of Four Book](https://en.wikipedia.org/wiki/Design_Patterns)
+- [Refactoring.Guru](https://refactoring.guru/design-patterns)
+- [Head First Design Patterns](https://www.oreilly.com/library/view/head-first-design/0596007124/)

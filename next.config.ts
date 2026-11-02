@@ -19,6 +19,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // wiki.bookchaowalit.com was merged into this site on 2026-11-03; its domain points here
+  // and every old URL lands on the matching knowledge entry (or the home index).
+  async redirects() {
+    const wiki = [{ type: 'host' as const, value: 'wiki.bookchaowalit.com' }];
+    return [
+      { source: '/wiki/:slug', has: wiki, destination: 'https://knowledgehub.bookchaowalit.com/knowledge/:slug', permanent: true },
+      { source: '/:path*', has: wiki, destination: 'https://knowledgehub.bookchaowalit.com/', permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -25,16 +25,20 @@ make one useful piece of personal knowledge easy to find and read.
 - The visual system should feel like an index and reading room, not a generic
   dashboard.
 
-## Current state (2026-10-23)
+## Current state (2026-10-23, updated 2026-11-03)
 
-What it is: a public, read-only reading room of 12 hand-written Markdown entries, three on each shelf (diary, knowledge,
-docs, ideas), with synthetic examples and source links. For developers and for the owner returning to a note. Public
+On 2026-11-03 the separate wiki (`content-wiki-web`, wiki.bookchaowalit.com) was merged in: its four pages
+(design-patterns, javascript-basics, react-hooks, low-seniority-careers) now live on the knowledge shelf and the old
+domain redirects here. The source of truth for the career note is the private knowledge-base.
+
+What it is: a public, read-only reading room of 16 hand-written Markdown entries: seven on knowledge and three on each of diary,
+docs and ideas, with synthetic examples and source links. For developers and for the owner returning to a note. Public
 diary entries pass the manual owner-review gate in `content/docs/publication-policy.mdx`; private diaries are not
 published.
 
 What works today:
 
-- Home index with shelf filters, a client-side search box over titles, descriptions, bodies and tags, and the 12 entries; each
+- Home index with shelf filters, a client-side search box over titles, descriptions, bodies and tags, and the 16 entries; each
   entry opens its own page (`/<shelf>/<slug>`). Before 2026-10-23 the home page filed all 12 under Diary and linked the
   other nine to `/diary/<slug>` (404); fixed in c9be610.
 - `POST /api/mcp`: JSON-RPC `initialize`, `tools/list` and `tools/call` (`get_entries`, `get_entry_by_slug`,

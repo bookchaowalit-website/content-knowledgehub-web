@@ -2,7 +2,7 @@
 
 A curated public technical reading room built with Next.js, Markdown entries and Tailwind CSS. The content is authored for public use, with synthetic examples and explicit source links.
 
-Live: https://knowledgehub.bookchaowalit.com — 12 entries, three per shelf. Product truth and limits: [PRODUCT.md](PRODUCT.md).
+Live: https://knowledgehub.bookchaowalit.com — 16 entries: seven on Knowledge (including the pages moved from the retired wiki.bookchaowalit.com), three on each other shelf. Product truth and limits: [PRODUCT.md](PRODUCT.md).
 
 ## Features
 
@@ -212,7 +212,7 @@ every page view.
 
 ## Public content and verification
 
-The 12 entries are a hand-curated public collection across four categories.
+The 16 entries are a hand-curated public collection across four categories.
 Follow [the publication policy](content/docs/publication-policy.mdx) before
 release: private diaries and raw transcripts are never imported or automatically
 exported. Use synthetic examples and obtain explicit owner review of the final

@@ -1,0 +1,247 @@
+---
+title: "React Hooks"
+description: "useState, useEffect, useContext and the other built-in hooks, with when to reach for each."
+date: "2024-03-15"
+tags: ["react", "hooks", "frontend"]
+---
+
+# React Hooks
+
+Hooks are functions that let you "hook into" React state and lifecycle features from function components. They were introduced in React 16.8.
+
+## Built-in Hooks
+
+### useState
+Manages state in functional components.
+
+```javascript
+import { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>
+        Increment
+      </button>
+    </div>
+  );
+}
+```
+
+### useEffect
+Handles side effects in components.
+
+```javascript
+import { useState, useEffect } from 'react';
+
+function DataFetcher() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('https://api.example.com/data')
+      .then(response => response.json())
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      });
+  }, []); // Empty array means run once on mount
+
+  if (loading) return <div>Loading...</div>;
+  return <div>Data: {data}</div>;
+}
+```
+
+### useContext
+Accesses React context.
+
+```javascript
+import { createContext, useContext } from 'react';
+
+const ThemeContext = createContext();
+
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState('light');
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+function ThemedButton() {
+  const { theme, setTheme } = useContext(ThemeContext);
+
+  return (
+    <button
+      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+      className={theme === 'light' ? 'bg-gray-200' : 'bg-gray-800 text-white'}
+    >
+      Toggle Theme
+    </button>
+  );
+}
+```
+
+### useReducer
+Complex state logic similar to Redux.
+
+```javascript
+import { useReducer } from 'react';
+
+const initialState = { count: 0 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    default:
+      return state;
+  }
+}
+
+function Counter() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  return (
+    <>
+      <p>Count: {state.count}</p>
+      <button onClick={() => dispatch({ type: 'increment' })}>
+        Increment
+      </button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>
+        Decrement
+      </button>
+    </>
+  );
+}
+```
+
+## Custom Hooks
+
+### useCounter
+```javascript
+import { useState, useCallback } from 'react';
+
+function useCounter(initialValue = 0) {
+  const [count, setCount] = useState(initialValue);
+
+  const increment = useCallback(() => setCount(c => c + 1), []);
+  const decrement = useCallback(() => setCount(c => c - 1), []);
+  const reset = useCallback(() => setCount(initialValue), [initialValue]);
+
+  return { count, increment, decrement, reset };
+}
+```
+
+### useLocalStorage
+```javascript
+import { useState, useEffect } from 'react';
+
+function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      return initialValue;
+    }
+  });
+
+  const setValue = (value) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue];
+}
+```
+
+## Rules of Hooks
+
+1. **Only call Hooks at the top level** - Don't call Hooks inside loops, conditions, or nested functions.
+2. **Only call Hooks from React functions** - Call them from React functional components or custom Hooks.
+
+## Performance Optimization
+
+### useMemo
+Memoizes expensive calculations.
+
+```javascript
+import { useMemo } from 'react';
+
+function ExpensiveComponent({ items }) {
+  const sortedItems = useMemo(() => {
+    console.log('Sorting items...');
+    return [...items].sort((a, b) => a - b);
+  }, [items]);
+
+  return <div>{sortedItems}</div>;
+}
+```
+
+### useCallback
+Memoizes function references.
+
+```javascript
+import { useCallback } from 'react';
+
+function ParentComponent() {
+  const handleClick = useCallback((id) => {
+    console.log(`Clicked ${id}`);
+  }, []);
+
+  return <ChildComponent onClick={handleClick} />;
+}
+```
+
+## Common Patterns
+
+### Fetching Data
+```javascript
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(url);
+        const json = await response.json();
+        setData(json);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+}
+```
+
+## Related Topics
+
+- [React Components](/wiki/react-components)
+- [State Management](/wiki/state-management)
+- [React Context](/wiki/react-context)
+
+## Further Reading
+
+- [Official React Hooks Documentation](https://react.dev/reference/react/hooks)
+- [React Hooks FAQ](https://react.dev/learn/sourcing-ui#using-hooks-with-external-state)
