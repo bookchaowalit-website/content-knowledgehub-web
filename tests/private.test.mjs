@@ -9,6 +9,7 @@ import {
   mintReadToken,
   readConfig,
   safePath,
+  splitFrontMatter,
   verifyAccess,
   viewFor,
 } from '../lib/private.ts';
@@ -185,4 +186,14 @@ test('private responses are no-store and noindex', () => {
   assert.equal(PRIVATE_HEADERS['X-Robots-Tag'], 'noindex, nofollow');
   assert.equal(RAW_HEADERS['Content-Security-Policy'], 'sandbox');
   assert.equal(RAW_HEADERS['X-Content-Type-Options'], 'nosniff');
+});
+
+test('front matter is YAML only: a js engine never runs', () => {
+  globalThis.__pwned = false;
+  const js = splitFrontMatter('---js\n{ title: (globalThis.__pwned = true, "x") }\n---\nbody');
+  assert.equal(globalThis.__pwned, false);
+  assert.equal(js.title, null);
+  const yaml = splitFrontMatter('---\ntitle: Runbook\n---\n# Body\n');
+  assert.deepEqual(yaml, { title: 'Runbook', content: '# Body\n' });
+  assert.deepEqual(splitFrontMatter('# No front matter'), { title: null, content: '# No front matter' });
 });

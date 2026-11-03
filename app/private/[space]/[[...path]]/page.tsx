@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import matter from 'gray-matter';
 import { Download, FileText, Folder } from 'lucide-react';
-import { childrenOf, hrefFor, safePath, viewFor } from '@/lib/private';
+import { childrenOf, hrefFor, safePath, splitFrontMatter, viewFor } from '@/lib/private';
 import { renderEntry } from '@/lib/render-entry';
 import { ownerReader } from '../../owner';
 
@@ -71,9 +70,9 @@ export default async function PrivateEntry({ params }: { params: Promise<{ space
   const raw = hrefFor('/private/raw', space, path);
   const name = path.split('/').pop() || path;
   const text = view === 'markdown' || view === 'text' ? Buffer.from(doc.bytes).toString('utf8') : '';
-  const parsed = view === 'markdown' ? matter(text) : null;
+  const parsed = view === 'markdown' ? splitFrontMatter(text) : null;
   const html = parsed ? await renderEntry(parsed.content) : '';
-  const title = typeof parsed?.data.title === 'string' ? parsed.data.title : name;
+  const title = parsed?.title || name;
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">

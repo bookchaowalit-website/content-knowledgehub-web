@@ -3,6 +3,7 @@
 // *.vercel.app URL that skips Cloudflare still finds nothing. No path, body or email is logged.
 
 import { createPublicKey, createSign, createVerify, randomUUID } from 'node:crypto';
+import matter from 'gray-matter';
 
 export type PrivateConfig = {
   team: string;
@@ -231,4 +232,16 @@ export function viewFor(mediaType: string, path: string): 'markdown' | 'text' | 
 /** URL path for a store document, each segment encoded. */
 export function hrefFor(base: string, space: string, path: string): string {
   return [base, encodeURIComponent(space), ...path.split('/').filter(Boolean).map(encodeURIComponent)].join('/');
+}
+
+// gray-matter evaluates `---js` / `---coffee` front matter. Store documents can be written by
+// agents through the MCP, so only plain `---` YAML (js-yaml safe load) is read; anything else stays body text.
+const NO_CODE = () => ({});
+const YAML_ONLY = { language: 'yaml', engines: { js: NO_CODE, javascript: NO_CODE, coffee: NO_CODE, coffeescript: NO_CODE } };
+
+/** The YAML front matter's string title (or null) and the body after it. */
+export function splitFrontMatter(text: string): { title: string | null; content: string } {
+  if (!/^---\r?\n/.test(text)) return { title: null, content: text };
+  const parsed = matter(text, YAML_ONLY as Parameters<typeof matter>[1]);
+  return { title: typeof parsed.data.title === 'string' ? parsed.data.title : null, content: parsed.content };
 }
