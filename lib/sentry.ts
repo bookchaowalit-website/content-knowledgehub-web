@@ -29,8 +29,19 @@ const stripUrlQueries = (text: string) => text.replace(/((?:https?:\/\/|\/)[^\s?
 const PRIVATE = /\/private(?![\w-])/;
 const redactPrivate = (text: string) => (PRIVATE.test(text) ? "/private/[redacted]" : text);
 const scrubText = (text: string) => redactPrivate(stripUrlQueries(text));
-// Bundle files (/_next/...) are route templates like app/private/[space], not documents.
-const scrubPath = (path: string) => (path.includes("/_next/") ? stripQuery(path) : redactPrivate(stripQuery(path)));
+// Bundle files (/_next/static/...) are route templates like app/private/[space], not documents;
+// decide on the parsed pathname only, so a query or a nested segment cannot claim that exemption.
+const pathnameOf = (path: string) => {
+  try {
+    return new URL(path, "http://local").pathname;
+  } catch {
+    return path;
+  }
+};
+const scrubPath = (path: string) => {
+  const bare = stripQuery(path);
+  return pathnameOf(bare).startsWith("/_next/static/") ? bare : redactPrivate(bare);
+};
 
 export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
   delete event.request;

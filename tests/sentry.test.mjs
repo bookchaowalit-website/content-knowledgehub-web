@@ -96,6 +96,10 @@ test('private shelf paths never reach Sentry', () => {
   });
   assert.doesNotMatch(JSON.stringify(odd), /draft|plan|My note|x\.md|a\.md/);
   assert.match(odd.exception.values[0].stacktrace.frames[1].abs_path, /_next\/static/);
+  for (const path of ['https://k.example/private/kb/s.md?x=/_next/', 'https://k.example/private/kb/_next/static/s.md', '/private/kb/s.md#/_next/static/']) {
+    const frame = scrubEvent({ exception: { values: [{ stacktrace: { frames: [{ abs_path: path }] } }] } }).exception.values[0].stacktrace.frames[0];
+    assert.equal(frame.abs_path, '/private/[redacted]', path);
+  }
   // Public paths are left alone.
   assert.equal(scrubEvent({ transaction: '/knowledge/privateer' }).transaction, '/knowledge/privateer');
 });
