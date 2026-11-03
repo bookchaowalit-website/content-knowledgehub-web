@@ -75,17 +75,35 @@ type Jwk = NodeJwk & { kid?: string };
 const certCache = new Map<string, { keys: Jwk[]; at: number }>();
 const CERT_TTL_MS = 10 * 60 * 1000;
 
-type CertCache = Map<string, { keys: Jwk[]; at: number }>;
+type CertCache = Map<string, { keys: Jwk[]; at: number; forcedAt?: number; inflight?: Promise<Jwk[]> }>;
+const FORCE_GAP_MS = 30 * 1000;
 
-/** Access signing keys, cached for 10 minutes; `force` refetches (Cloudflare rotated its key). */
+/** Access signing keys, cached for 10 minutes. `force` (an unknown kid: Cloudflare rotated its key)
+ * refetches at most once per 30 s per team, shares one fetch between concurrent requests, and keeps
+ * the old keys if the refetch fails, so forged kids cannot turn every request into an outbound call. */
 async function accessCerts(team: string, fetchImpl: FetchImpl, cache: CertCache, force: boolean): Promise<{ keys: Jwk[]; fresh: boolean }> {
-  const cached = cache.get(team);
-  if (!force && cached && Date.now() - cached.at < CERT_TTL_MS) return { keys: cached.keys, fresh: false };
-  const response = await fetchImpl(`https://${team}/cdn-cgi/access/certs`, { cache: 'no-store', redirect: 'error' });
-  if (!response.ok) throw new Error(`access certs answered ${response.status}`);
-  const keys = ((await response.json()) as { keys?: Jwk[] }).keys || [];
-  cache.set(team, { keys, at: Date.now() });
-  return { keys, fresh: true };
+  const entry = cache.get(team);
+  const now = Date.now();
+  if (entry && !force && now - entry.at < CERT_TTL_MS) return { keys: entry.keys, fresh: false };
+  if (entry && force && now - (entry.forcedAt ?? 0) < FORCE_GAP_MS) return { keys: entry.keys, fresh: false };
+  if (entry?.inflight) return { keys: await entry.inflight, fresh: true };
+  const load = (async () => {
+    const response = await fetchImpl(`https://${team}/cdn-cgi/access/certs`, { cache: 'no-store', redirect: 'error' });
+    if (!response.ok) throw new Error(`access certs answered ${response.status}`);
+    return ((await response.json()) as { keys?: Jwk[] }).keys || [];
+  })();
+  const pending = { keys: entry?.keys ?? [], at: entry?.at ?? 0, forcedAt: force ? now : entry?.forcedAt, inflight: load };
+  cache.set(team, pending);
+  try {
+    const keys = await load;
+    cache.set(team, { keys, at: Date.now(), forcedAt: pending.forcedAt });
+    return { keys, fresh: true };
+  } catch (error) {
+    if (entry) cache.set(team, { ...entry, forcedAt: pending.forcedAt });
+    else cache.delete(team);
+    if (entry && force) return { keys: entry.keys, fresh: true };
+    throw error;
+  }
 }
 
 const decodePart = (part: string) => JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));

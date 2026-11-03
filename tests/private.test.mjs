@@ -233,9 +233,16 @@ test('an unknown signing key refreshes the certificates once', async () => {
   const fresh = accessToken({}, { key: rotated.privateKey, kid: 'k2' });
   assert.equal(await verifyAccess(fresh, config, { now: NOW, fetchImpl, cache }), 'owner@example.com');
   assert.equal(fetches, 2);
-  // An unknown kid refetches at most once per request.
-  assert.equal(await verifyAccess(accessToken({}, { kid: 'nope' }), config, { now: NOW, fetchImpl, cache }), null);
-  assert.equal(fetches, 3);
+  // Forced refreshes are spaced 30 s apart: a stream of forged kids makes no further calls.
+  for (let i = 0; i < 5; i += 1) {
+    assert.equal(await verifyAccess(accessToken({}, { kid: `nope-${i}` }), config, { now: NOW, fetchImpl, cache }), null);
+  }
+  assert.equal(fetches, 2);
+  // A failing forced refresh keeps the cached keys working.
+  cache.get('team.cloudflareaccess.com').forcedAt = 0;
+  const down = async () => { fetches += 1; return new Response('', { status: 500 }); };
+  assert.equal(await verifyAccess(accessToken({}, { kid: 'nope-x' }), config, { now: NOW, fetchImpl: down, cache }), null);
+  assert.equal(await verifyAccess(fresh, config, { now: NOW, fetchImpl: down, cache }), 'owner@example.com');
 });
 
 test('entities in rendered URLs are decoded before the fragment is split off', () => {
