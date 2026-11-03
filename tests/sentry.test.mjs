@@ -84,5 +84,18 @@ test('private shelf paths never reach Sentry', () => {
   assert.equal(event.transaction, '/private/[redacted]');
   assert.equal(event.tags.route, '/private/[redacted]');
   assert.equal(event.tags.release, 'r1');
-  assert.match(event.exception.values[0].value, /bookchaowalit\.com\/private\/\[redacted\] failed/);
+  assert.equal(event.exception.values[0].value, '/private/[redacted]');
+  // Names with spaces, quotes or brackets, and page URLs in stack frames, are covered too.
+  const odd = scrubEvent({
+    message: "open /private/kb/My (draft) 'plan'.md failed",
+    exception: { values: [{ stacktrace: { frames: [
+      { abs_path: 'https://knowledgehub.bookchaowalit.com/private/kb/My note.md', filename: '/private/kb/x.md' },
+      { abs_path: 'https://knowledgehub.bookchaowalit.com/_next/static/chunks/app/private/[space]/page.js' },
+    ] } }] },
+    debug_meta: { images: [{ code_file: 'https://knowledgehub.bookchaowalit.com/private/kb/a.md' }] },
+  });
+  assert.doesNotMatch(JSON.stringify(odd), /draft|plan|My note|x\.md|a\.md/);
+  assert.match(odd.exception.values[0].stacktrace.frames[1].abs_path, /_next\/static/);
+  // Public paths are left alone.
+  assert.equal(scrubEvent({ transaction: '/knowledge/privateer' }).transaction, '/knowledge/privateer');
 });

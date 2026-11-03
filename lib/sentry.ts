@@ -24,9 +24,13 @@ const stripQuery = (value: string) => value.split(/[?#]/)[0];
 // Drops ?query and #hash from every URL or absolute path inside free text, e.g. an error message.
 const stripUrlQueries = (text: string) => text.replace(/((?:https?:\/\/|\/)[^\s?#"'<>()]*)[?#][^\s"'<>()]*/g, "$1");
 
-// The private shelf's URLs name private spaces, folders and files: keep only the prefix.
-const redactPrivate = (text: string) => text.replace(/\/private(?:\/[^\s?#"'<>()]*)?(?:[?#][^\s"'<>()]*)?/g, "/private/[redacted]");
+// The private shelf's URLs name private spaces, folders and files, and a name may hold any
+// character. Fail closed: text that mentions /private is replaced whole.
+const PRIVATE = /\/private(?![\w-])/;
+const redactPrivate = (text: string) => (PRIVATE.test(text) ? "/private/[redacted]" : text);
 const scrubText = (text: string) => redactPrivate(stripUrlQueries(text));
+// Bundle files (/_next/...) are route templates like app/private/[space], not documents.
+const scrubPath = (path: string) => (path.includes("/_next/") ? stripQuery(path) : redactPrivate(stripQuery(path)));
 
 export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
   delete event.request;
@@ -50,12 +54,12 @@ export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
     if (typeof value.value === "string") value.value = scrubText(value.value);
     for (const frame of value.stacktrace?.frames ?? []) {
       delete frame.vars;
-      if (typeof frame.filename === "string") frame.filename = stripQuery(frame.filename);
-      if (typeof frame.abs_path === "string") frame.abs_path = stripQuery(frame.abs_path);
+      if (typeof frame.filename === "string") frame.filename = scrubPath(frame.filename);
+      if (typeof frame.abs_path === "string") frame.abs_path = scrubPath(frame.abs_path);
     }
   }
   for (const image of event.debug_meta?.images ?? []) {
-    if (typeof image.code_file === "string") image.code_file = stripQuery(image.code_file);
+    if (typeof image.code_file === "string") image.code_file = scrubPath(image.code_file);
   }
   return event;
 }
