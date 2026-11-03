@@ -75,14 +75,17 @@ type Jwk = NodeJwk & { kid?: string };
 const certCache = new Map<string, { keys: Jwk[]; at: number }>();
 const CERT_TTL_MS = 10 * 60 * 1000;
 
-async function accessCerts(team: string, fetchImpl: FetchImpl | undefined): Promise<Jwk[]> {
-  const cached = !fetchImpl && certCache.get(team);
-  if (cached && Date.now() - cached.at < CERT_TTL_MS) return cached.keys;
-  const response = await (fetchImpl || fetch)(`https://${team}/cdn-cgi/access/certs`, { cache: 'no-store', redirect: 'error' });
+type CertCache = Map<string, { keys: Jwk[]; at: number }>;
+
+/** Access signing keys, cached for 10 minutes; `force` refetches (Cloudflare rotated its key). */
+async function accessCerts(team: string, fetchImpl: FetchImpl, cache: CertCache, force: boolean): Promise<{ keys: Jwk[]; fresh: boolean }> {
+  const cached = cache.get(team);
+  if (!force && cached && Date.now() - cached.at < CERT_TTL_MS) return { keys: cached.keys, fresh: false };
+  const response = await fetchImpl(`https://${team}/cdn-cgi/access/certs`, { cache: 'no-store', redirect: 'error' });
   if (!response.ok) throw new Error(`access certs answered ${response.status}`);
   const keys = ((await response.json()) as { keys?: Jwk[] }).keys || [];
-  if (!fetchImpl) certCache.set(team, { keys, at: Date.now() });
-  return keys;
+  cache.set(team, { keys, at: Date.now() });
+  return { keys, fresh: true };
 }
 
 const decodePart = (part: string) => JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));
@@ -91,7 +94,7 @@ const decodePart = (part: string) => JSON.parse(Buffer.from(part, 'base64url').t
 export async function verifyAccess(
   token: string | null | undefined,
   config: PrivateConfig,
-  options: { now?: number; fetchImpl?: FetchImpl } = {},
+  options: { now?: number; fetchImpl?: FetchImpl; cache?: CertCache } = {},
 ): Promise<string | null> {
   try {
     if (!token || token.length > 8192) return null;
@@ -99,7 +102,15 @@ export async function verifyAccess(
     if (parts.length !== 3) return null;
     const header = decodePart(parts[0]);
     if (header.alg !== 'RS256' || typeof header.kid !== 'string') return null;
-    const jwk = (await accessCerts(config.team, options.fetchImpl)).find((k) => k.kid === header.kid);
+    const fetchImpl = options.fetchImpl || fetch;
+    // A test's own fetch gets its own cache unless it passes one.
+    const cache = options.cache || (options.fetchImpl ? new Map() : certCache);
+    let certs = await accessCerts(config.team, fetchImpl, cache, false);
+    let jwk = certs.keys.find((k) => k.kid === header.kid);
+    if (!jwk && !certs.fresh) {
+      certs = await accessCerts(config.team, fetchImpl, cache, true);
+      jwk = certs.keys.find((k) => k.kid === header.kid);
+    }
     if (!jwk) return null;
     const verifier = createVerify('RSA-SHA256').update(`${parts[0]}.${parts[1]}`);
     if (!verifier.verify(createPublicKey({ key: jwk, format: 'jwk' }), Buffer.from(parts[2], 'base64url'))) return null;
@@ -254,6 +265,17 @@ export function splitFrontMatter(text: string): { title: string | null; content:
   }
 }
 
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+
+/** HTML attribute text back to the URL it encodes (&#x26; -> &). */
+function decodeEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
+    if (name[0] !== '#') return ENTITIES[name.toLowerCase()] ?? whole;
+    const code = name[1].toLowerCase() === 'x' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+  });
+}
+
 const ABSOLUTE = /^([a-z][a-z0-9+.-]*:|\/|#|$)/i;
 
 /** Point relative <img src> and <a href> in a rendered document at the private shelf:
@@ -261,12 +283,13 @@ const ABSOLUTE = /^([a-z][a-z0-9+.-]*:|\/|#|$)/i;
 export function rewriteRelative(html: string, space: string, docPath: string): string {
   const dir = docPath.split('/').slice(0, -1);
   return html.replace(/(<(img|a)\b[^>]*?\s(?:src|href)=")([^"]*)"/gi, (whole, start: string, tag: string, value: string) => {
-    if (ABSOLUTE.test(value)) return whole;
-    const hash = value.indexOf('#');
-    const fragment = hash >= 0 ? value.slice(hash) : '';
+    const url = decodeEntities(value);
+    if (ABSOLUTE.test(url)) return whole;
+    const hash = url.indexOf('#');
+    const fragment = hash >= 0 ? `#${encodeURIComponent(url.slice(hash + 1))}` : '';
     let target: string;
     try {
-      target = decodeURIComponent(value.slice(0, hash >= 0 ? hash : undefined).split('?')[0].replace(/&amp;/g, '&'));
+      target = decodeURIComponent(url.slice(0, hash >= 0 ? hash : undefined).split('?')[0]);
     } catch {
       return whole;
     }

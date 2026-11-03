@@ -221,3 +221,25 @@ test('relative images and links in a document point into the private shelf', () 
   // A path that climbs out of the space is left alone rather than guessed.
   assert.match(out, /src="..\/..\/..\/escape.png"/);
 });
+
+test('an unknown signing key refreshes the certificates once', async () => {
+  const rotated = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  let served = certs;
+  let fetches = 0;
+  const fetchImpl = async () => { fetches += 1; return new Response(JSON.stringify(served), { status: 200 }); };
+  const cache = new Map();
+  assert.equal(await verifyAccess(accessToken(), config, { now: NOW, fetchImpl, cache }), 'owner@example.com');
+  served = { keys: [{ ...rotated.publicKey.export({ format: 'jwk' }), kid: 'k2', alg: 'RS256' }] };
+  const fresh = accessToken({}, { key: rotated.privateKey, kid: 'k2' });
+  assert.equal(await verifyAccess(fresh, config, { now: NOW, fetchImpl, cache }), 'owner@example.com');
+  assert.equal(fetches, 2);
+  // An unknown kid refetches at most once per request.
+  assert.equal(await verifyAccess(accessToken({}, { kid: 'nope' }), config, { now: NOW, fetchImpl, cache }), null);
+  assert.equal(fetches, 3);
+});
+
+test('entities in rendered URLs are decoded before the fragment is split off', () => {
+  const out = rewriteRelative('<a href="./a&#x26;b.md#x">l</a> <img src="it&#x27;s.png">', 'kb', 'notes/r.md');
+  assert.match(out, /href="\/private\/kb\/notes\/a%26b.md#x"/);
+  assert.match(out, /src="\/private\/raw\/kb\/notes\/it's.png"/);
+});

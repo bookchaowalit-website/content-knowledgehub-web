@@ -34,12 +34,14 @@ export default async function PrivateEntry({ params }: { params: Promise<{ space
   if (path === null || !spaces.includes(space)) notFound();
 
   const docs = await reader.list(space);
-  const listing = childrenOf(docs, path);
+  // The space root is always a folder, even while the space is still empty.
+  const listing = childrenOf(docs, path) ?? (path === '' ? { folders: [], files: [] } : null);
   if (listing) {
     return (
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Crumbs space={space} path={path} />
         <h1 className="text-2xl font-bold text-gray-900 mb-6 break-words">{path || space}</h1>
+        {!listing.folders.length && !listing.files.length && <p className="text-gray-600">No documents in this space yet.</p>}
         <ul className="bg-white rounded-lg shadow-sm divide-y divide-gray-100">
           {listing.folders.map((f) => (
             <li key={'d' + f.name}>
