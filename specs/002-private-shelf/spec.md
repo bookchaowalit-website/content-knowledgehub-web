@@ -17,7 +17,7 @@ Standard: ADR-0004 (TDD + SDD). Related: platform-knowledge-api SPEC-002 (hosted
 | Field | Value |
 |---|---|
 | Spec ID / version | SPEC-002 / 1.0 |
-| Status | implemented; live check pending |
+| Status | implemented; live (owner login confirmed 2026-11-03) |
 | Repository | bookchaowalit-website/content-knowledgehub-web |
 | Maker | Claude Code (knowledge consolidation session) |
 | Reviewer | Codex read-only review (Stop hook) |
@@ -126,7 +126,7 @@ deploy: anonymous `/private` gets the Access login; the `*.vercel.app` URL gets 
 | # | Risk | Resolution |
 |---|---|---|
 | 1 | Proxying a Vercel domain through Cloudflare | SSL Full (strict); Vercel's HTTP-01 renewal passes through the proxy; checked after the switch |
-| 2 | architecture-docs is still edited in Git | the store copy is refreshed by `store_sync push` (scheduled job is a follow-up); the page shows each document's updated time |
+| 2 | architecture-docs is still edited in Git | its `store-mirror` workflow pushes every main commit (`store_sync push --prune`, then verify); the page shows each document's updated time |
 | 3 | A leaked service key | read scope only; revoke by removing its block from the API variable |
 
 ## 8. Change log
