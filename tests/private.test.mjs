@@ -8,6 +8,7 @@ import {
   childrenOf,
   mintReadToken,
   readConfig,
+  rewriteRelative,
   safePath,
   splitFrontMatter,
   verifyAccess,
@@ -111,9 +112,9 @@ function fakeApi(documents) {
     const u = new URL(url);
     calls.push({ path: u.pathname, query: Object.fromEntries(u.searchParams), auth: init.headers.Authorization, cache: init.cache, redirect: init.redirect });
     if (u.pathname === '/api/v1/store/documents') {
-      const offset = Number(u.searchParams.get('offset'));
+      const after = u.searchParams.get('after') || '';
       const limit = Number(u.searchParams.get('limit'));
-      const page = documents.slice(offset, offset + limit).map(({ body, ...meta }) => meta);
+      const page = documents.filter((d) => d.path > after).slice(0, limit).map(({ body, ...meta }) => meta);
       return new Response(JSON.stringify({ documents: page, total: documents.length }), { status: 200 });
     }
     const doc = documents.find((d) => d.path === u.searchParams.get('path'));
@@ -131,7 +132,7 @@ test('the reader pages through a space and reads one document', async () => {
   const reader = new StoreReader(config, fetchImpl);
   const listed = await reader.list('knowledge-base');
   assert.equal(listed.length, 2005);
-  assert.deepEqual(calls.map((c) => c.query.offset), ['0', '1000', '2000']);
+  assert.deepEqual(calls.map((c) => c.query.after), ['', 'notes/0999.md', 'notes/1999.md']);
   for (const call of calls) {
     assert.match(call.auth, /^Bearer [\w-]+\.[\w-]+\.[\w-]+$/);
     assert.equal(call.cache, 'no-store');
@@ -163,8 +164,11 @@ test('folders list their direct children', () => {
 test('unsafe paths are refused locally', () => {
   assert.equal(safePath(['notes', 'a b.md']), 'notes/a b.md');
   assert.equal(safePath([]), '');
-  assert.equal(safePath(['notes%2Fa.md']), 'notes/a.md');
-  for (const segments of [['..', 'x'], ['a', '', 'b'], ['a\\b'], ['a\u0000b'], ['.'], ['%2e%2e'], ['%zz']]) {
+  // Next.js hands over decoded segments; decoding again would break names like these.
+  assert.equal(safePath(['100%.md']), '100%.md');
+  assert.equal(safePath(['a%20b.md']), 'a%20b.md');
+  assert.equal(safePath(['notes/a.md']), 'notes/a.md');
+  for (const segments of [['..', 'x'], ['a', '', 'b'], ['a\\b'], ['a\u0000b'], ['.'], ['a/../b'], ['a//b']]) {
     assert.equal(safePath(segments), null, segments.join('|'));
   }
 });
@@ -196,4 +200,24 @@ test('front matter is YAML only: a js engine never runs', () => {
   const yaml = splitFrontMatter('---\ntitle: Runbook\n---\n# Body\n');
   assert.deepEqual(yaml, { title: 'Runbook', content: '# Body\n' });
   assert.deepEqual(splitFrontMatter('# No front matter'), { title: null, content: '# No front matter' });
+});
+
+test('a malformed YAML front matter is shown as text and never thrown', () => {
+  const bad = '---\ntitle: private: value\n---\nbody';
+  assert.deepEqual(splitFrontMatter(bad), { title: null, content: bad });
+});
+
+test('relative images and links in a document point into the private shelf', () => {
+  const html = '<p><img src="./diagram.png" alt="d"> <img src="../img/x%20y.png"> <img src="https://cdn.example/a.png">'
+    + ' <a href="other.md#part">o</a> <a href="/abs">a</a> <a href="#top">t</a> <img src="../../../escape.png"> <a href="mailto:x@y.z">m</a></p>';
+  const out = rewriteRelative(html, 'knowledge-base', 'notes/sub/readme.md');
+  assert.match(out, /src="\/private\/raw\/knowledge-base\/notes\/sub\/diagram.png"/);
+  assert.match(out, /src="\/private\/raw\/knowledge-base\/notes\/img\/x%20y.png"/);
+  assert.match(out, /src="https:\/\/cdn.example\/a.png"/);
+  assert.match(out, /href="\/private\/knowledge-base\/notes\/sub\/other.md#part"/);
+  assert.match(out, /href="\/abs"/);
+  assert.match(out, /href="#top"/);
+  assert.match(out, /href="mailto:x@y.z"/);
+  // A path that climbs out of the space is left alone rather than guessed.
+  assert.match(out, /src="..\/..\/..\/escape.png"/);
 });

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Download, FileText, Folder } from 'lucide-react';
-import { childrenOf, hrefFor, safePath, splitFrontMatter, viewFor } from '@/lib/private';
+import { childrenOf, hrefFor, rewriteRelative, safePath, splitFrontMatter, viewFor } from '@/lib/private';
 import { renderEntry } from '@/lib/render-entry';
 import { ownerReader } from '../../owner';
 
@@ -71,7 +71,7 @@ export default async function PrivateEntry({ params }: { params: Promise<{ space
   const name = path.split('/').pop() || path;
   const text = view === 'markdown' || view === 'text' ? Buffer.from(doc.bytes).toString('utf8') : '';
   const parsed = view === 'markdown' ? splitFrontMatter(text) : null;
-  const html = parsed ? await renderEntry(parsed.content) : '';
+  const html = parsed ? rewriteRelative(await renderEntry(parsed.content), space, path) : '';
   const title = parsed?.title || name;
 
   return (

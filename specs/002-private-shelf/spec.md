@@ -118,6 +118,7 @@ deploy: anonymous `/private` gets the Access login; the `*.vercel.app` URL gets 
 | Scenario | Red | Green | Note |
 |---|---|---|---|
 | AC-01–AC-07 | `tests/private.test.mjs`: `ERR_MODULE_NOT_FOUND lib/private.ts` (local, 2026-11-03) | 9 passed; whole suite 27 passed, tsc + eslint clean, `next build` shows the three private routes dynamic (local) | strip-only Node refused a TS parameter property; fixed |
+| AC-03, AC-04, AC-07 (Codex round) | 3 new tests failed: `rewriteRelative` / malformed YAML / `100%.md` (local) | 30 passed (local) | segments are not decoded twice; relative images and links resolve into the shelf; a YAML error never reaches logs; listing pages by `after` |
 | AC-01, AC-05 | — | local `next start`: forged token → 404 with `Cache-Control: private, no-store` on index, folder, raw and a `..` path | live checks after deploy |
 
 ## 7. Risks

@@ -134,15 +134,12 @@ export function mintReadToken(config: PrivateConfig, now = Math.floor(Date.now()
   return `${head}.${createSign('RSA-SHA256').update(head).sign(config.key).toString('base64url')}`;
 }
 
-/** Joined store path from URL segments, or null if any segment is unsafe. '' is the space root. */
+/** Joined store path from route segments, or null if any part is unsafe. '' is the space root.
+ * Next.js passes segments already decoded, so they are not decoded again (`100%.md` stays). */
 export function safePath(segments: string[]): string | null {
-  try {
-    const parts = segments.flatMap((s) => decodeURIComponent(s).split('/'));
-    if (segments.length && parts.some((p) => !p || p === '.' || p === '..' || /[\\\u0000]/.test(p))) return null;
-    return parts.join('/');
-  } catch {
-    return null;
-  }
+  const parts = segments.flatMap((s) => s.split('/'));
+  if (segments.length && parts.some((p) => !p || p === '.' || p === '..' || /[\\\u0000]/.test(p))) return null;
+  return parts.join('/');
 }
 
 const PAGE = 1000;
@@ -170,16 +167,22 @@ export class StoreReader {
     if (!this.config.spaces.includes(space)) throw new Error('unknown space');
   }
 
-  /** Every live document's metadata in a space, in path order. */
+  /** Every live document's metadata in a space, in path order. Keyset paging (`after` = last
+   * path seen), so a write between pages cannot skip a document. */
   async list(space: string): Promise<DocumentMeta[]> {
     this.checkSpace(space);
     const all: DocumentMeta[] = [];
-    for (let offset = 0; ; offset += PAGE) {
-      const response = await this.call('documents', { space, limit: String(PAGE), offset: String(offset) });
+    let after = '';
+    for (;;) {
+      const response = await this.call('documents', { space, limit: String(PAGE), after });
       if (!response.ok) throw new Error(`store answered ${response.status}`);
       const page = (await response.json()) as { documents: DocumentMeta[]; total: number };
       all.push(...page.documents);
-      if (!page.documents.length || all.length >= page.total) return all;
+      if (page.documents.length < PAGE) return all;
+      const last = page.documents[page.documents.length - 1].path;
+      // An API that ignored `after` would hand back the same page forever.
+      if (last <= after) throw new Error('store paging did not advance');
+      after = last;
     }
   }
 
@@ -242,6 +245,41 @@ const YAML_ONLY = { language: 'yaml', engines: { js: NO_CODE, javascript: NO_COD
 /** The YAML front matter's string title (or null) and the body after it. */
 export function splitFrontMatter(text: string): { title: string | null; content: string } {
   if (!/^---\r?\n/.test(text)) return { title: null, content: text };
-  const parsed = matter(text, YAML_ONLY as Parameters<typeof matter>[1]);
-  return { title: typeof parsed.data.title === 'string' ? parsed.data.title : null, content: parsed.content };
+  try {
+    const parsed = matter(text, YAML_ONLY as Parameters<typeof matter>[1]);
+    return { title: typeof parsed.data.title === 'string' ? parsed.data.title : null, content: parsed.content };
+  } catch {
+    // js-yaml errors quote the document; show it as text rather than let that reach logs or Sentry.
+    return { title: null, content: text };
+  }
+}
+
+const ABSOLUTE = /^([a-z][a-z0-9+.-]*:|\/|#|$)/i;
+
+/** Point relative <img src> and <a href> in a rendered document at the private shelf:
+ * images at the raw route, links at the reader. URLs that leave the space are kept as written. */
+export function rewriteRelative(html: string, space: string, docPath: string): string {
+  const dir = docPath.split('/').slice(0, -1);
+  return html.replace(/(<(img|a)\b[^>]*?\s(?:src|href)=")([^"]*)"/gi, (whole, start: string, tag: string, value: string) => {
+    if (ABSOLUTE.test(value)) return whole;
+    const hash = value.indexOf('#');
+    const fragment = hash >= 0 ? value.slice(hash) : '';
+    let target: string;
+    try {
+      target = decodeURIComponent(value.slice(0, hash >= 0 ? hash : undefined).split('?')[0].replace(/&amp;/g, '&'));
+    } catch {
+      return whole;
+    }
+    const parts = [...dir];
+    for (const part of target.split('/')) {
+      if (part === '' || part === '.') continue;
+      if (part === '..') {
+        if (!parts.length) return whole;
+        parts.pop();
+      } else parts.push(part);
+    }
+    if (!parts.length || parts.some((p) => /[\\\u0000]/.test(p))) return whole;
+    const base = tag.toLowerCase() === 'img' ? '/private/raw' : '/private';
+    return `${start}${hrefFor(base, space, parts.join('/'))}${tag.toLowerCase() === 'a' ? fragment : ''}"`;
+  });
 }
