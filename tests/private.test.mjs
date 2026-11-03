@@ -8,6 +8,7 @@ import {
   childrenOf,
   mintReadToken,
   readConfig,
+  firstParam,
   rewriteRelative,
   safePath,
   splitFrontMatter,
@@ -249,4 +250,11 @@ test('entities in rendered URLs are decoded before the fragment is split off', (
   const out = rewriteRelative('<a href="./a&#x26;b.md#x">l</a> <img src="it&#x27;s.png">', 'kb', 'notes/r.md');
   assert.match(out, /href="\/private\/kb\/notes\/a%26b.md#x"/);
   assert.match(out, /src="\/private\/raw\/kb\/notes\/it's.png"/);
+});
+
+test('a repeated search parameter uses its first value', () => {
+  assert.equal(firstParam(['notes', 'runbook']), 'notes');
+  assert.equal(firstParam('notes'), 'notes');
+  assert.equal(firstParam(undefined), '');
+  assert.equal(firstParam([]), '');
 });

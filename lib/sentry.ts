@@ -4,6 +4,7 @@
 
 type Frame = { vars?: unknown; filename?: string; abs_path?: string };
 type ScrubbableEvent = {
+  message?: unknown;
   request?: unknown;
   user?: unknown;
   breadcrumbs?: unknown;
@@ -23,6 +24,10 @@ const stripQuery = (value: string) => value.split(/[?#]/)[0];
 // Drops ?query and #hash from every URL or absolute path inside free text, e.g. an error message.
 const stripUrlQueries = (text: string) => text.replace(/((?:https?:\/\/|\/)[^\s?#"'<>()]*)[?#][^\s"'<>()]*/g, "$1");
 
+// The private shelf's URLs name private spaces, folders and files: keep only the prefix.
+const redactPrivate = (text: string) => text.replace(/\/private(?:\/[^\s?#"'<>()]*)?(?:[?#][^\s"'<>()]*)?/g, "/private/[redacted]");
+const scrubText = (text: string) => redactPrivate(stripUrlQueries(text));
+
 export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
   delete event.request;
   delete event.user;
@@ -33,15 +38,16 @@ export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
     for (const key of SAFE_CONTEXTS) if (key in event.contexts) kept[key] = event.contexts[key];
     event.contexts = kept;
   }
-  if (typeof event.transaction === "string") event.transaction = stripQuery(event.transaction);
+  if (typeof event.transaction === "string") event.transaction = redactPrivate(stripQuery(event.transaction));
+  if (typeof event.message === "string") event.message = scrubText(event.message);
   if (event.tags) {
     delete event.tags.url;
     for (const [key, value] of Object.entries(event.tags)) {
-      if (typeof value === "string") event.tags[key] = stripQuery(value);
+      if (typeof value === "string") event.tags[key] = redactPrivate(stripQuery(value));
     }
   }
   for (const value of event.exception?.values ?? []) {
-    if (typeof value.value === "string") value.value = stripUrlQueries(value.value);
+    if (typeof value.value === "string") value.value = scrubText(value.value);
     for (const frame of value.stacktrace?.frames ?? []) {
       delete frame.vars;
       if (typeof frame.filename === "string") frame.filename = stripQuery(frame.filename);

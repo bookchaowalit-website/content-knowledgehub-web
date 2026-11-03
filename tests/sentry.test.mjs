@@ -71,3 +71,18 @@ test('scrubEvent strips query strings from URLs in the exception message, frames
   assert.equal(event.debug_meta.images[0].code_file, 'https://example.com/chunk.js');
   assert.doesNotMatch(JSON.stringify(event), /private|secret/);
 });
+
+test('private shelf paths never reach Sentry', () => {
+  const event = scrubEvent({
+    message: 'failed at /private/knowledge-base/roles/plan.md',
+    transaction: '/private/architecture-docs/runbooks/db.md',
+    tags: { route: '/private/knowledge-base/notes', release: 'r1' },
+    exception: { values: [{ value: 'fetch https://knowledgehub.bookchaowalit.com/private/raw/kb/a%20b.png?download=1 failed' }] },
+  });
+  const text = JSON.stringify(event);
+  assert.doesNotMatch(text, /knowledge-base|architecture-docs|plan\.md|a%20b/);
+  assert.equal(event.transaction, '/private/[redacted]');
+  assert.equal(event.tags.route, '/private/[redacted]');
+  assert.equal(event.tags.release, 'r1');
+  assert.match(event.exception.values[0].value, /bookchaowalit\.com\/private\/\[redacted\] failed/);
+});

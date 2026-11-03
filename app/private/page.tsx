@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ArrowLeft, FolderLock, FileText } from 'lucide-react';
-import { hrefFor } from '@/lib/private';
+import { firstParam, hrefFor } from '@/lib/private';
 import { ownerReader } from './owner';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PrivateIndex({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function PrivateIndex({ searchParams }: { searchParams: Promise<{ q?: string | string[] }> }) {
   const { reader, spaces } = await ownerReader();
-  const q = ((await searchParams).q || '').trim().toLowerCase().slice(0, 200);
+  const q = firstParam((await searchParams).q).trim().toLowerCase().slice(0, 200);
   const listed = await Promise.all(spaces.map(async (space) => ({ space, docs: await reader.list(space) })));
   const hits = q
     ? listed.flatMap(({ space, docs }) => docs.filter((d) => d.path.toLowerCase().includes(q)).map((d) => ({ space, doc: d }))).slice(0, 200)

@@ -324,3 +324,8 @@ export function rewriteRelative(html: string, space: string, docPath: string): s
     return `${start}${hrefFor(base, space, parts.join('/'))}${tag.toLowerCase() === 'a' ? fragment : ''}"`;
   });
 }
+
+/** A search param that may repeat (?q=a&q=b): the first value, or ''. */
+export function firstParam(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value) ?? '';
+}
