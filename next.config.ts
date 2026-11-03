@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
           { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
         ],
       },
+      // The private shelf (SPEC-002) is owner-only: never cached, never indexed, 404s included.
+      ...['/private', '/private/:path*'].map((source) => ({
+        source,
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      })),
     ];
   },
   // wiki.bookchaowalit.com was merged into this site on 2026-11-03; its domain points here

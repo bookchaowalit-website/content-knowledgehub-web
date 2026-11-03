@@ -4,6 +4,11 @@ A curated public technical reading room built with Next.js, Markdown entries and
 
 Live: https://knowledgehub.bookchaowalit.com — 16 entries: seven on Knowledge (including the pages moved from the retired wiki.bookchaowalit.com), three on each other shelf. Product truth and limits: [PRODUCT.md](PRODUCT.md).
 
+**Private shelf** (`/private`, owner only, [SPEC-002](specs/002-private-shelf/spec.md)): every private space of the hosted
+knowledge store (knowledge-base, architecture-docs), read live from platform-knowledge-api. Cloudflare Access guards the
+path at the edge and the app verifies the Access JWT again, so the `*.vercel.app` URLs return 404. Nothing private is in
+the repository or the static build; edit documents through the knowledge MCP (`knowledge.store.put`).
+
 ## Features
 
 - **Content Organization**: Categorized content (Diary, Knowledge, Docs, Ideas)
