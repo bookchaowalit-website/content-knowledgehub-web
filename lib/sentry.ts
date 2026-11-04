@@ -4,6 +4,8 @@
 
 type Frame = { vars?: unknown; filename?: string; abs_path?: string };
 type ScrubbableEvent = {
+  logentry?: { message?: string; params?: unknown[] };
+  fingerprint?: string[];
   message?: unknown;
   request?: unknown;
   user?: unknown;
@@ -12,7 +14,7 @@ type ScrubbableEvent = {
   transaction?: string;
   tags?: Record<string, unknown>;
   contexts?: Record<string, unknown>;
-  exception?: { values?: { value?: string; stacktrace?: { frames?: Frame[] } }[] };
+  exception?: { values?: { type?: string; value?: string; stacktrace?: { frames?: Frame[] } }[] };
   debug_meta?: { images?: { code_file?: string }[] };
 };
 
@@ -21,8 +23,10 @@ type ScrubbableEvent = {
 const SAFE_CONTEXTS = ["os", "runtime", "browser", "device", "app"];
 
 const stripQuery = (value: string) => value.split(/[?#]/)[0];
-// Drops ?query and #hash from every URL or absolute path inside free text, e.g. an error message.
-const stripUrlQueries = (text: string) => text.replace(/((?:https?:\/\/|\/)[^\s?#"'<>()]*)[?#][^\s"'<>()]*/g, "$1");
+// Drops a ?query or #hash glued to any word inside free text, e.g. an error message: full URLs,
+// absolute paths and bare words such as `api?token=x`. A lone "?" at the end of a word, or a
+// "#5" after a space, is not a query and stays.
+const stripUrlQueries = (text: string) => text.replace(/([^\s?#"'<>()])[?#][^\s"'<>()]+/g, "$1");
 
 // The private shelf's URLs name private spaces, folders and files, and a name may hold any
 // character. Fail closed: text that mentions /private is replaced whole.
@@ -54,7 +58,14 @@ export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
     event.contexts = kept;
   }
   if (typeof event.transaction === "string") event.transaction = redactPrivate(stripQuery(event.transaction));
+  // A thrown string or captureMessage text is sent as event.message (and logentry) as well as
+  // in exception.values, so every free-text copy is cleaned.
   if (typeof event.message === "string") event.message = scrubText(event.message);
+  if (event.logentry) {
+    if (typeof event.logentry.message === "string") event.logentry.message = scrubText(event.logentry.message);
+    event.logentry.params = event.logentry.params?.map((param) => (typeof param === "string" ? scrubText(param) : param));
+  }
+  if (event.fingerprint) event.fingerprint = event.fingerprint.map((part) => (typeof part === "string" ? scrubText(part) : part));
   if (event.tags) {
     delete event.tags.url;
     for (const [key, value] of Object.entries(event.tags)) {
@@ -62,6 +73,7 @@ export function scrubEvent<T extends ScrubbableEvent>(event: T): T {
     }
   }
   for (const value of event.exception?.values ?? []) {
+    if (typeof value.type === "string") value.type = scrubText(value.type);
     if (typeof value.value === "string") value.value = scrubText(value.value);
     for (const frame of value.stacktrace?.frames ?? []) {
       delete frame.vars;
