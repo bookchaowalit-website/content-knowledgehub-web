@@ -4,3 +4,12 @@
 id = "GHSA-vfj7-8cjw-p6xm"
 ignoreUntil = 2027-01-31
 reason = "braces <= 3.0.3 has no fixed release; dev-only build tooling (fast-glob > micromatch), never fed user input"
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-01-04T00:00:00Z
+reason = """minimatch <11.0.1 globparts amplification DoS. No fix in the 3.x or 10.x lines, and the \
+latest eslint, @eslint/* and typescript-eslint releases still require minimatch ^3 / ^10. Dev-only: \
+lint tooling run on glob patterns from this repository's own config, never on request input, and not \
+part of the runtime bundle. The @sentry/bundler-plugins path is fixed by the glob 14 override. \
+Re-check when eslint or typescript-eslint moves to minimatch 11."""
