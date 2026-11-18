@@ -272,6 +272,13 @@ describe("stylesheet floor", () => {
     expect(phone).toContain(".rs-back { margin-left: -8px;");
   });
 
+  it("keeps a chip inside the screen: it never grows past its row and its text wraps", () => {
+    expect(css).toMatch(/\.rs-chips li \{[^}]*max-width: 100%/);
+    const chip = css.split("\n").find((line) => line.startsWith(".rs-chip {"))!;
+    expect(chip).toContain("max-width: 100%");
+    expect(chip).toContain("overflow-wrap: anywhere");
+  });
+
   it("never sets text below 12px", () => {
     const sizes = [...css.matchAll(/font-size: (\d+)px/g)].map((m) => Number(m[1]));
     expect(Math.min(...sizes)).toBeGreaterThanOrEqual(12);

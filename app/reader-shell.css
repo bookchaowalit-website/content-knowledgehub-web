@@ -101,7 +101,9 @@
 .rs-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
 .rs-search input:focus-visible { outline: 3px solid var(--rs-focus); outline-offset: 0; }
 .rs-chips ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.rs-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 1px solid var(--rs-field-line); border-radius: 980px; background: transparent; color: var(--rs-fg); font-size: 15px; text-decoration: none; cursor: pointer; }
+/* A chip never grows past its row, and a long label (say a ?tag= from the URL) wraps inside it. */
+.rs-chips li { max-width: 100%; }
+.rs-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 44px; padding: 6px 16px; overflow-wrap: anywhere; text-align: left; border: 1px solid var(--rs-field-line); border-radius: 980px; background: transparent; color: var(--rs-fg); font-size: 15px; text-decoration: none; cursor: pointer; }
 .rs-chip:hover { background: var(--rs-hover); }
 .rs-chip[aria-current="page"], .rs-chip[aria-pressed="true"] { border-color: var(--rs-fg); background: var(--rs-fg); color: var(--rs-bg); font-weight: 600; }
 .rs-chip small { color: inherit; font-size: 13px; font-variant-numeric: tabular-nums; opacity: .85; }

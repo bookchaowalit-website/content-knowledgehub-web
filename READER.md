@@ -29,6 +29,8 @@ not installed. Copy these four files **byte for byte** (check with `sha256sum`):
   puts focus back in the field; do the same for any other "clear" button that removes itself.
 - **Filter counts follow the search**: a chip's number is what clicking it shows, so count within the
   entries that match the current query.
+- **Chips stay on screen**: a chip never grows past its row and its label wraps. Build chips only from
+  values the content really has, never straight from a URL parameter.
 - **Always say how many show** with `ResultCount` (a `role="status"` line), and show an `EmptyState`
   that says what to do next, different for "nothing yet" and "nothing matches" (with a way back).
 - **Articles**: `ArticleHeader` (back link, tags, title, lede, meta with a machine-readable date), the body
@@ -37,7 +39,8 @@ not installed. Copy these four files **byte for byte** (check with `sha256sum`):
 - **Prose** styles raw Markdown/MDX HTML: headings, lists, links, quotes, inline code, code blocks, images,
   figures, tables and rules. Wrap every table in `TableScroll` (a labelled, focusable scroll region) so a wide
   one scrolls inside itself; never set `display` on `table`, `tr` or `td`, which drops the table semantics in
-  Safari/VoiceOver. In MDX, map `table` to `TableScroll` and `h1` to `h2` so the page keeps one h1. A code block that scrolls sideways gets
+  Safari/VoiceOver. In MDX, map `table` to `TableScroll` and `h1` to `h2` so the page keeps one h1, and
+  compile with `remark-gfm`, or Markdown `| … |` tables never become tables. A code block that scrolls sideways gets
   `tabIndex={0}`; a copy button is a `button.rs-copy` inside `div.rs-code` with a `role="status"` message.
 - **Reading measure 68ch** for heads, summaries and prose. Line height 1.65 for Latin text and 1.8 under
   `:lang(th)` (Thai stacks marks above and below the line); put `lang="th"` on Thai content or pages. The

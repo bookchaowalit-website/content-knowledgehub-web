@@ -26,7 +26,7 @@ class RpcError extends Error {
   }
 }
 
-const TOOLS = [
+export const TOOLS = [
   {
     name: 'get_entries',
     description: 'Get all entries or filter by category',

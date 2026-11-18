@@ -45,17 +45,20 @@ export function HubFrame({ current, children }: { current?: Shelf; children: Rea
       <main id="main" className="rs-main">{children}</main>
       <ReaderFoot
         source={SOURCE}
-        links={[{ href: "/api/mcp", label: "MCP API" }]}
+        links={[{ href: "/mcp", label: "MCP API" }]}
         note="Every entry is an MDX file in the public repository, reviewed by the owner before it is published."
       />
     </Reader>
   );
 }
 
-export const toEntry = (entry: HubEntry): Entry => {
+/** The home view's search and shelf as a query string; entry links carry it so Back returns to the same results. */
+const state = (shelf = "", q = "") => `?${new URLSearchParams({ ...(shelf ? { shelf } : {}), ...(q ? { q } : {}) })}`.replace(/\?$/, "");
+
+export const toEntry = (entry: HubEntry, from = ""): Entry => {
   const shelf = shelfOf(entry);
   return {
-    href: `/${shelf}/${entry.slug}`,
+    href: `/${shelf}/${entry.slug}${from}`,
     title: entry.frontmatter.title,
     summary: entry.frontmatter.description,
     date: entry.frontmatter.date,
@@ -65,7 +68,7 @@ export const toEntry = (entry: HubEntry): Entry => {
 };
 
 const fieldsOf = (entry: HubEntry) => [entry.frontmatter.title, entry.frontmatter.description ?? "", entry.content, ...(entry.frontmatter.tags ?? [])];
-const homeHref = (shelf = "", q = "") => `/?${new URLSearchParams({ ...(shelf ? { shelf } : {}), ...(q ? { q } : {}) })}`.replace(/\?$/, "");
+const homeHref = (shelf = "", q = "") => `/${state(shelf, q)}`;
 
 /** Home: search and shelf chips come first, then every matching entry, newest first. */
 export function HomeView({ entries, q = "", shelf = "" }: { entries: HubEntry[]; q?: string; shelf?: string }) {
@@ -97,7 +100,7 @@ export function HomeView({ entries, q = "", shelf = "" }: { entries: HubEntry[];
             <ResultCount shown={shown.length} total={entries.length} noun="entry" plural="entries" query={query || undefined} filter={current ? SHELVES[current].label : undefined} />
           </div>
           {shown.length > 0 ? (
-            <EntryList entries={shown.map(toEntry)} />
+            <EntryList entries={shown.map((entry) => toEntry(entry, state(current, query)))} />
           ) : (
             <EmptyState title="No entries match" action={<Link className="rs-plain" href="/">Show every entry</Link>}>
               Try fewer or different words, or another shelf.
@@ -124,15 +127,21 @@ export function ShelfView({ shelf, entries }: { shelf: Shelf; entries: HubEntry[
       ) : (
         <>
           <ResultCount shown={entries.length} total={entries.length} noun="entry" plural="entries" />
-          <EntryList entries={entries.map(toEntry)} />
+          <EntryList entries={entries.map((entry) => toEntry(entry))} />
         </>
       )}
     </HubFrame>
   );
 }
 
-/** One entry: header, the rendered body (HTML from lib/render-entry), then previous / next on the same shelf. */
-export function EntryView({ shelf, entry, html, siblings }: { shelf: Shelf; entry: HubEntry; html: string; siblings: HubEntry[] }) {
+/**
+ * One entry: header, the rendered body (HTML from lib/render-entry), then previous / next on the same shelf.
+ * Opened from home search results (?q= / ?shelf=), Back returns to those results instead of the shelf.
+ */
+export function EntryView({ shelf, entry, html, siblings, q = "", from = "" }: { shelf: Shelf; entry: HubEntry; html: string; siblings: HubEntry[]; q?: string; from?: string }) {
+  const query = q.trim();
+  const fromShelf = isShelf(from) ? from : "";
+  const back = query || fromShelf ? { href: homeHref(fromShelf, query), label: "Search results" } : { href: `/${shelf}`, label: `All ${SHELVES[shelf].label.toLowerCase()}` };
   const { frontmatter } = entry;
   const { previous, next } = neighbours(siblings, siblings.findIndex((s) => s.slug === entry.slug));
   const link = (e?: HubEntry): PagerLink | undefined => (e ? { href: `/${shelf}/${e.slug}`, title: e.frontmatter.title } : undefined);
@@ -141,7 +150,7 @@ export function EntryView({ shelf, entry, html, siblings }: { shelf: Shelf; entr
     <HubFrame current={shelf}>
       <article className="rs-article" lang={lang}>
         <ArticleHeader
-          back={{ href: `/${shelf}`, label: `All ${SHELVES[shelf].label.toLowerCase()}` }}
+          back={back}
           tags={frontmatter.tags}
           title={frontmatter.title}
           lede={frontmatter.description}

@@ -12,6 +12,7 @@ import KnowledgeEntry, { generateMetadata, generateStaticParams } from "@/app/kn
 import DiaryEntry, * as diary from "@/app/diary/[slug]/page";
 import DocsEntry, * as docs from "@/app/docs/[slug]/page";
 import IdeasEntry, * as ideas from "@/app/ideas/[slug]/page";
+import McpPage from "@/app/mcp/page";
 import sitemap from "@/app/sitemap";
 import robots from "@/app/robots";
 import nextConfig from "../next.config";
@@ -75,7 +76,7 @@ describe("home", () => {
 
   it("renders the real home page from the content folder", async () => {
     const host = page(await Home({ searchParams: Promise.resolve({ q: ["BigInt"], shelf: "knowledge" }) }));
-    expect(host.querySelector(".rs-entry-link[href='/knowledge/big-integer-inputs']")).not.toBeNull();
+    expect(host.querySelector(".rs-entry-link[href='/knowledge/big-integer-inputs?shelf=knowledge&q=BigInt']")).not.toBeNull();
     const all = page(await Home({ searchParams: Promise.resolve({}) }));
     expect(all.querySelectorAll(".rs-entry").length).toBeGreaterThanOrEqual(12);
   });
@@ -141,6 +142,39 @@ describe("entries", () => {
       expect(await mod.generateMetadata(params("missing"))).toEqual({});
       await expect(Page(params("missing"))).rejects.toThrow();
     }
+  });
+});
+
+describe("follow-ups", () => {
+  it("carries home search and shelf into entry links, and Back returns to those results", async () => {
+    const home = page(<HomeView entries={entries} q="big" shelf="knowledge" />);
+    expect(home.querySelector(".rs-entry-link")?.getAttribute("href")).toBe("/knowledge/bigint?shelf=knowledge&q=big");
+    const plain = page(<HomeView entries={entries} />);
+    expect(plain.querySelector('.rs-entry-link[href="/diary/store"]')).not.toBeNull();
+    const back = page(<EntryView shelf="knowledge" entry={entries[0]} html="" siblings={entries.slice(0, 2)} q="big" from="knowledge" />);
+    expect(back.querySelector(".rs-back")?.getAttribute("href")).toBe("/?shelf=knowledge&q=big");
+    expect(back.querySelector(".rs-back")?.textContent).toBe("← Search results");
+    const real = page(await KnowledgeEntry({ params: Promise.resolve({ slug: "big-integer-inputs" }), searchParams: Promise.resolve({ q: ["BigInt"], shelf: "nope" }) }));
+    expect(real.querySelector(".rs-back")?.getAttribute("href")).toBe("/?q=BigInt");
+  });
+
+  it("gives each entry its own share title, description and URL", async () => {
+    const meta = await generateMetadata(params("big-integer-inputs"));
+    expect(meta.openGraph).toMatchObject({ url: "https://knowledgehub.bookchaowalit.com/knowledge/big-integer-inputs", title: "Keep large integer input out of floating point", type: "article" });
+    expect(meta.twitter).toMatchObject({ title: "Keep large integer input out of floating point" });
+  });
+
+  it("renders GFM tables inside a scroll region", async () => {
+    const html = await renderArticle("| a | b |\n|---|---|\n| 1 | 2 |\n");
+    expect(html).toContain('<div class="rs-table" role="region" aria-label="Table" tabindex="0"><table>');
+    expect(html).toContain("</table></div>");
+  });
+
+  it("links the footer to an MCP how-to page with the real tools", () => {
+    expect(page(<HomeView entries={entries} />).querySelector('.rs-foot a[href="/mcp"]')?.textContent).toBe("MCP API");
+    const host = page(<McpPage />);
+    expect([...host.querySelectorAll("tbody code")].map((c) => c.textContent)).toEqual(["get_entries", "get_entry_by_slug", "search_entries", "get_categories"]);
+    expect([...host.querySelectorAll("tbody td:last-child")].map((c) => c.textContent)).toEqual(["category (optional), limit (optional)", "category, slug", "query", "none"]);
   });
 });
 
