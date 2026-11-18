@@ -1,85 +1,31 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SITE } from "@/components/hub-views";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const title = "Knowledge Hub — Chaowalit Greepoke";
+const description = "Technical notes, public lab observations, reference docs and unbuilt ideas by Chaowalit Greepoke (Book), kept as plain files and searchable in one place.";
 
 export const metadata: Metadata = {
-  title: "Bookchaowalit - Bookchaowalit",
-  description: "Bookchaowalit by Bookchaowalit - A modern web application built with Next.js",
-  keywords: ['Bookchaowalit', 'Bookchaowalit', 'Next.js', 'React', 'TypeScript'],
-  authors: [{ name: 'Bookchaowalit', url: 'https://bookchaowalit.com' }],
-  creator: 'Bookchaowalit',
-  publisher: 'Bookchaowalit',
-  metadataBase: new URL('https://bookchaowalit.com'),
-  alternates: {
-    canonical: 'https://bookchaowalit.com',
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://bookchaowalit.com',
-    title: 'Bookchaowalit - Bookchaowalit',
-    description: 'Bookchaowalit by Bookchaowalit - A modern web application built with Next.js',
-    siteName: 'Bookchaowalit',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Bookchaowalit',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Bookchaowalit - Bookchaowalit',
-    description: 'Bookchaowalit by Bookchaowalit - A modern web application built with Next.js',
-    images: ['/og-image.png'],
-    creator: '@bookchaowalit',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
+  title: { default: title, template: "%s — Knowledge Hub" },
+  description,
+  authors: [{ name: "Chaowalit Greepoke (Book)", url: "https://bookchaowalit.com" }],
+  creator: "Chaowalit Greepoke (Book)",
+  metadataBase: new URL(SITE),
+  alternates: { canonical: "/" },
+  openGraph: { type: "website", locale: "en_US", url: SITE, siteName: "Knowledge Hub", title, description },
+  twitter: { card: "summary", title, description, creator: "@bookchaowalit" },
+  robots: { index: true, follow: true },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {/* THESIS: make personal knowledge feel findable and worth returning to.
-OWN-WORLD: an unbleached paper archive with a blue index rail, red filing marks, and editorial serif moments.
-STORY: arrive at the collection, choose a shelf, scan the filing rows, then open one record into a quiet reading room.
-FIRST VIEWPORT: the archive promise, record count, shelf index, and search all appear before the first filing row.
-FORM: use ruled rows, typographic scale, and shelf marks as the navigation grammar; no generic dashboard chrome.
-SEED: fb5631de · assigned direction 4 · read mode.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance */}
-        {children}
-      </body>
+    // The font variables sit on <html>: the Reader shell tokens live on :root and read them from there.
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
-
-// SEO TODO: Add Open Graph tags for social sharing

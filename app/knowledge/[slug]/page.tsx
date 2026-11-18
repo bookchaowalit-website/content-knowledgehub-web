@@ -1,62 +1,23 @@
-import { getEntryBySlug } from '@/lib/mdx';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { renderEntry } from '@/lib/render-entry';
+import { EntryView } from '@/components/hub-views';
+import { getEntries, getEntryBySlug } from '@/lib/mdx';
+import { renderArticle } from '@/lib/render-entry';
 
-export default async function KnowledgeEntryPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const entry = getEntryBySlug('knowledge', slug);
+type Props = { params: Promise<{ slug: string }> };
 
-  if (!entry) {
-    notFound();
-  }
+export function generateStaticParams() {
+  return getEntries('knowledge').map((entry) => ({ slug: entry.slug }));
+}
 
-  const contentHtml = await renderEntry(entry.content);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const entry = getEntryBySlug('knowledge', (await params).slug);
+  if (!entry) return {};
+  return { title: entry.frontmatter.title, description: entry.frontmatter.description, alternates: { canonical: `/knowledge/${entry.slug}` } };
+}
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center mb-8">
-          <Link href="/knowledge" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-            <ArrowLeft size={20} />
-            <span>Back to Knowledge</span>
-          </Link>
-        </div>
-
-        {/* Entry Content */}
-        <article className="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto">
-          <div className="mb-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <span className="text-sm text-gray-500">
-                {entry.frontmatter.date && new Date(entry.frontmatter.date).toLocaleDateString()}
-              </span>
-            </div>
-
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{entry.frontmatter.title}</h1>
-
-            {entry.frontmatter.description && (
-              <p className="text-lg text-gray-600 mb-4">{entry.frontmatter.description}</p>
-            )}
-
-            {entry.frontmatter.tags && entry.frontmatter.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {entry.frontmatter.tags.map((tag, index) => (
-                  <span key={index} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div
-            className="prose prose-lg prose-green max-w-none"
-            dangerouslySetInnerHTML={{ __html: contentHtml }}
-          />
-        </article>
-      </div>
-    </div>
-  );
+export default async function EntryPage({ params }: Props) {
+  const entry = getEntryBySlug('knowledge', (await params).slug);
+  if (!entry) notFound();
+  return <EntryView shelf="knowledge" entry={entry} html={await renderArticle(entry.content)} siblings={getEntries('knowledge')} />;
 }

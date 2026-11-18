@@ -1,74 +1,24 @@
 ---
-title: "Knowledge Hub — Archive Index"
+title: "Knowledge Hub — Reader shell"
 status: "active"
-updated: "2026-08-24"
+updated: "2026-11-19"
 ---
 
-# Knowledge Hub — Archive Index
+# Knowledge Hub — Reader shell
 
-## Overview
+Since 2026-11-19 the public pages use the shared Reader shell (see `READER.md`): Geist via `next/font`,
+the `--rs-*` tokens in `app/reader-shell.css` (light and dark, WCAG 2.2 AA), one h1 per page, 44px
+targets and a forced-colors fallback. The earlier "archive index" look (Avenir Next, paper and red
+filing marks) is retired; its contrast and 10px labels did not meet the floor.
 
-Knowledge Hub is designed as a local reading room and filing index. The primary
-job is retrieval: choose a shelf, scan a concise record, and open the original
-MDX entry. The surface avoids dashboard conventions so the archive feels owned,
-quiet, and worth returning to.
+## Pages
 
-## Colors
+- `/` — search (GET `?q=`) and shelf chips (`?shelf=`) come first, then every entry, newest first,
+  with a result count and two empty states (nothing yet / nothing matches).
+- `/knowledge`, `/diary`, `/docs`, `/ideas` — one shelf each, linked from the top bar
+  (`aria-current="page"` on the current one).
+- `/<shelf>/<slug>` — article header, the Markdown body in `Prose` (the repeated `# Title` line is
+  dropped so the page keeps one h1), previous / next on the same shelf. Thai entries carry `lang="th"`.
+- `/private/...` — owner-only shelf (SPEC-002), unchanged and kept out of robots and the sitemap.
 
-- **Unbleached paper** — `#EBE6D8`, the continuous reading-room ground.
-- **Ink green** — `#1D2B25`, primary type and rules.
-- **Archive blue** — `#2E5963`, shelf marks and secondary emphasis.
-- **Filing red** — `#B64B32`, active search and editorial markers.
-- **Muted graphite** — `#68736B`, metadata and supporting copy.
-- Do not introduce dark mode or category rainbow colors; the shelf index owns
-  the palette.
-
-## Typography
-
-- Interface labels use an Avenir Next / Trebuchet MS sans stack.
-- Titles and entry names use Georgia as an editorial reading voice.
-- Filing metadata uses a system monospace stack.
-- Display scale is intentionally oversized on the home page, while records stay
-  compact enough to scan.
-
-## Layout
-
-- A wide archive margin carries navigation and counts.
-- The first viewport contains the promise, collection count, shelf strip, and
-  search before the filing rows.
-- Entries are ruled rows with fixed file/date/open columns, not interchangeable
-  dashboard cards.
-- At narrow widths, the shelf strip becomes two columns and entry metadata
-  collapses while titles remain readable.
-
-## Elevation & Depth
-
-- Depth comes from paper shifts on hover and a single-pixel rule hierarchy.
-- No gradients, floating shadows, or glass effects.
-- The archive ledger uses a vertical rule to create a quiet secondary plane.
-
-## Shapes
-
-- Mostly square geometry with hairline borders.
-- Small rectangular shelf marks; no pill buttons except where the browser control
-  requires a compact status.
-- Hover is a small paper inset, not a dramatic transform.
-
-## Components
-
-- **Archive navigation** — edition label, record count, and private-archive cue.
-- **Collection ledger** — count, source, and honesty boundary.
-- **Shelf strip** — filter control that also communicates category counts.
-- **Search field** — live client-side filtering over serialized MDX entries.
-- **Entry row** — number, shelf mark, title, description, date, and open affordance.
-- Empty search states stay plain and do not fabricate content.
-
-## Do's and Don'ts
-
-- Do make the source and filing status visible.
-- Do keep categories legible as shelves.
-- Do preserve slug links to every existing category entry.
-- Don't turn this into a generic admin dashboard.
-- Don't add activity numbers, collaboration claims, or content not present in MDX.
-- Don't replace the paper, rule, and type grammar with a template component kit.
-
+Views live in `components/hub-views.tsx` and take plain data; `tests/pages.test.tsx` renders them.

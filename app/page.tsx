@@ -1,12 +1,10 @@
-import { getCategories, getEntries } from '@/lib/mdx';
-import ArchiveHome from './home-client';
+import { HomeView } from '@/components/hub-views';
+import { getEntries } from '@/lib/mdx';
 
-export default function HomePage() {
-  const entries = getEntries().map((entry) => ({
-    slug: entry.slug,
-    content: entry.content,
-    frontmatter: entry.frontmatter,
-  }));
+type Search = { q?: string | string[]; shelf?: string | string[] };
+const first = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value) ?? '';
 
-  return <ArchiveHome entries={entries} categories={getCategories()} />;
+export default async function HomePage({ searchParams }: { searchParams: Promise<Search> }) {
+  const params = await searchParams;
+  return <HomeView entries={getEntries()} q={first(params.q).slice(0, 200)} shelf={first(params.shelf)} />;
 }

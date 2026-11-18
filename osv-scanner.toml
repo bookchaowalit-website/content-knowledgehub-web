@@ -13,3 +13,12 @@ latest eslint, @eslint/* and typescript-eslint releases still require minimatch 
 lint tooling run on glob patterns from this repository's own config, never on request input, and not \
 part of the runtime bundle. The @sentry/bundler-plugins path is fixed by the glob 14 override. \
 Re-check when eslint or typescript-eslint moves to minimatch 11."""
+
+[[IgnoredVulns]]
+id = "GHSA-fc5q-39xc-vjpf"
+ignoreUntil = 2027-01-18T00:00:00Z
+reason = """picomatch <=4.0.7 ReDoS through single-branch repeated extglobs. No fixed release exists \
+(4.0.7 is the latest). Build and test tooling only: @sentry/nextjs -> @rollup/plugin-commonjs, vite, \
+vitest, tinyglobby (eslint/typescript-eslint) and micromatch, all matching glob patterns from this \
+repository's own config at build, lint or test time, never request input, and not part of the \
+Next.js runtime bundle. Re-check when picomatch ships a fix."""

@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     const wiki = [{ type: 'host' as const, value: 'wiki.bookchaowalit.com' }];
     return [
+      // The old per-app portfolio list now lives on the main site (permanent: Next answers 308).
+      { source: '/more-projects', destination: 'https://bookchaowalit.com/', permanent: true },
       { source: '/wiki/:slug', has: wiki, destination: 'https://knowledgehub.bookchaowalit.com/knowledge/:slug', permanent: true },
       { source: '/:path*', has: wiki, destination: 'https://knowledgehub.bookchaowalit.com/', permanent: true },
     ];
