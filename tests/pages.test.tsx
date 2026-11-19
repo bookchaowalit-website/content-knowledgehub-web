@@ -52,7 +52,7 @@ describe("home", () => {
     expect(texts(host, ".rs-chip")).toEqual(["All4", "Knowledge2", "Diary1", "Docs1"]);
     expect(host.querySelector('.rs-chip[aria-current="page"]')?.textContent).toBe("Diary1");
     expect(host.querySelector('input[type="hidden"][name="shelf"]')?.getAttribute("value")).toBe("diary");
-    expect(host.querySelector('.rs-search a[href="/?shelf=diary"]')?.textContent).toBe("Clear");
+    expect(host.querySelector('.rs-search a[href="/?shelf=diary#rs-search-q"]')?.textContent).toBe("Clear");
   });
 
   it("counts only matching entries per shelf", () => {

@@ -19,14 +19,18 @@ not installed. Copy these four files **byte for byte** (check with `sha256sum`):
   the page holds in one sentence; no invented counts, readers or dates.
 - **Index pages** list entries with `EntryList`: title, a meta line (date first, then reading time or scope),
   a one-line summary and tags. Rows by default; `layout="cards"` for short collections. The title link
-  covers the whole entry, so each entry is one large target. Under a section `h2`, pass `headingLevel={3}`.
+  covers the whole entry (its `::after` overlay), so each entry is one large target. Under a section `h2`,
+  pass `headingLevel={3}`. The focused title link draws its own 3px ring (`.rs-entry-link:focus-visible`),
+  because the design-floor check reads the focused element; do not ring the card with `:has()` or add a
+  site-local focus workaround. The `<ul>` carries `role="list"` so Safari/VoiceOver keeps the list.
 - **Tags are labels** (`Tags`); filtering is done with `TagFilter` chips (links, `?tag=…`, current one has
   `aria-current="page"`) or, on a client page, buttons with `aria-pressed` and the `rs-chip` class.
 - **Search where it helps** (more than a handful of entries): `SearchForm`. On a server page it is a GET
   form with a Search button and a Clear link, and the page reads `searchParams`. On a client page pass
   `value`, `onValueChange` and `onClear`; it then filters live and is not a form (a `role="search"` box, no
   field name, Enter cancelled), so the query never reaches the server, even before JavaScript loads. Clear
-  puts focus back in the field; do the same for any other "clear" button that removes itself.
+  puts focus back in the field in both modes (on a server page the Clear link ends in `#rs-search-<name>`,
+  the field's id, so the reloaded page focuses it); do the same for any other "clear" button that removes itself.
 - **Filter counts follow the search**: a chip's number is what clicking it shows, so count within the
   entries that match the current query.
 - **Chips stay on screen**: a chip never grows past its row and its label wraps. Build chips only from

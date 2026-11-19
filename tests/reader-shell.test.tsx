@@ -98,6 +98,7 @@ describe("index pieces", () => {
     render(<EntryList entries={entries} />);
     const list = host.querySelector(".rs-list")!;
     expect(list.getAttribute("data-layout")).toBe("rows");
+    expect(list.getAttribute("role")).toBe("list");
     const [first, second] = [...host.querySelectorAll(".rs-entry")];
     expect(first.querySelector("h2 a.rs-entry-link")?.getAttribute("href")).toBe("/a");
     expect(first.querySelector("time")?.getAttribute("datetime")).toBe("2026-10-15");
@@ -141,7 +142,11 @@ describe("index pieces", () => {
     expect(form.querySelector<HTMLInputElement>('input[type="hidden"]')?.name).toBe("tag");
     expect(form.querySelector("label .rs-search-label")?.textContent).toBe("Search articles");
     expect(form.querySelector("button[type=submit]")?.textContent).toBe("Search");
-    expect(form.querySelector("a.rs-plain")?.getAttribute("href")).toBe("/blog");
+    // Clear reloads the page with the field as the fragment target, so focus lands back in the field.
+    expect(input.id).toBe("rs-search-q");
+    expect(form.querySelector("a.rs-plain")?.getAttribute("href")).toBe("/blog#rs-search-q");
+    render(<SearchForm label="Search" defaultValue="x" clearHref="/blog#top" />);
+    expect(host.querySelector("a.rs-plain")?.getAttribute("href")).toBe("/blog#top");
   });
 
   it("filters live in a client page: no form and no field name, so Enter never sends the query to the server", () => {
@@ -250,6 +255,10 @@ describe("stylesheet floor", () => {
     expect(css).toContain("@media (prefers-color-scheme: dark)");
     expect(css).toContain("@media (forced-colors: active)");
     expect(css).toContain("outline: 3px solid var(--rs-focus)");
+    // The focused entry link carries the ring itself (the design floor reads the focused element), never the card.
+    expect(css).toMatch(/^\.rs-entry-link:focus-visible \{ outline: 3px solid var\(--rs-focus\);/m);
+    expect(css).not.toMatch(/\.rs-entry:has\(/);
+    expect(css).not.toMatch(/\.rs-entry-link[^{]*\{[^}]*outline: none/);
     for (const selector of [".rs-nav a", ".rs-chip", ".rs-button, .rs-plain", ".rs-foot a", ".rs-back", ".rs-copy"]) {
       const rule = css.split("\n").find((line) => line.startsWith(`${selector} {`));
       expect(rule, selector).toContain("min-height: 44px");

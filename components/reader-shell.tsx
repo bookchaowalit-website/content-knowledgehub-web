@@ -98,8 +98,9 @@ function MetaLine({ date, meta = [] }: { date?: string; meta?: string[] }) {
 /** Index rows (default) or cards. Each title link covers its whole entry, so the entry is one large target. */
 export function EntryList({ entries, layout = "rows", headingLevel = 2 }: { entries: Entry[]; layout?: "rows" | "cards"; headingLevel?: 2 | 3 }) {
   const Heading = headingLevel === 3 ? "h3" : "h2";
+  // role="list": Safari/VoiceOver drops list semantics from a <ul> styled with list-style: none.
   return (
-    <ul className="rs-list" data-layout={layout}>
+    <ul className="rs-list" role="list" data-layout={layout}>
       {entries.map((entry) => (
         <li key={entry.href}>
           <article className="rs-entry">
@@ -151,7 +152,8 @@ type SearchProps = {
  * A labelled search field. On a server page it is a GET form with a Search button and a Clear link. Given
  * onValueChange it filters live: then it is not a form at all (a role="search" box, no name on the field), so
  * Enter can never send the query to the server, even before JavaScript loads; Enter is also cancelled in case
- * the box sits inside some other form. Clear empties the field and puts focus back in it.
+ * the box sits inside some other form. Clear empties the field and puts focus back in it. On a server page the
+ * Clear link ends in #rs-search-<name>, the field's id, so the reloaded page focuses the field again.
  */
 export function SearchForm({ label, action, name = "q", placeholder, defaultValue, hidden = {}, clearHref, value, onValueChange, onClear }: SearchProps) {
   const field = (
@@ -168,7 +170,7 @@ export function SearchForm({ label, action, name = "q", placeholder, defaultValu
               onChange: (event: ChangeEvent<HTMLInputElement>) => onValueChange(event.target.value),
               onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => { if (event.key === "Enter") event.preventDefault(); },
             }
-          : { name, defaultValue })}
+          : { name, defaultValue, id: `rs-search-${name}` })}
       />
     </label>
   );
@@ -190,7 +192,7 @@ export function SearchForm({ label, action, name = "q", placeholder, defaultValu
       {field}
       {Object.entries(hidden).map(([key, val]) => <input key={key} type="hidden" name={key} value={val} />)}
       <button className="rs-button" type="submit">Search</button>
-      {defaultValue && clearHref ? <a className="rs-plain" href={clearHref}>Clear</a> : null}
+      {defaultValue && clearHref ? <a className="rs-plain" href={clearHref.includes("#") ? clearHref : `${clearHref}#rs-search-${name}`}>Clear</a> : null}
     </form>
   );
 }

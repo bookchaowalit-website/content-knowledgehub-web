@@ -111,15 +111,15 @@
 /* Results sit close to the toolbar that narrows them. */
 .rs-toolbar + .rs-list, .rs-toolbar + .rs-empty { margin-top: 24px; }
 
-/* Entries: rows (default) or cards. The title link covers the whole entry, so the entry is one large target. */
+/* Entries: rows (default) or cards. The title link's ::after covers the whole entry, so the entry is one large target. */
 .rs-list { display: grid; margin: 0; padding: 0; list-style: none; }
 .rs-list > li + li { border-top: 1px solid var(--rs-line); }
 .rs-list[data-layout="cards"] { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
 .rs-list[data-layout="cards"] > li + li { border-top: 0; }
 .rs-entry { position: relative; display: grid; gap: 6px; padding: 20px 0; border-radius: 12px; }
 .rs-list[data-layout="cards"] .rs-entry { height: 100%; align-content: start; padding: 20px; background: var(--rs-surface); border: 1px solid var(--rs-line); border-radius: 18px; }
-.rs-entry:has(.rs-entry-link:focus-visible) { outline: 3px solid var(--rs-focus); outline-offset: 4px; }
-.rs-entry:has(.rs-entry-link:focus-visible) .rs-entry-link { outline: none; }
+/* The focused title link carries its own ring (checkers and the browser read the focused element), not the card. */
+.rs-entry-link:focus-visible { outline: 3px solid var(--rs-focus); outline-offset: 2px; border-radius: 4px; }
 .rs-entry h2, .rs-entry h3 { order: 2; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; overflow-wrap: anywhere; }
 .rs-entry-link { color: var(--rs-fg); text-decoration: none; }
 .rs-entry-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
@@ -219,7 +219,7 @@
 @media (forced-colors: active) {
   .rs-tag, .rs-chip, .rs-empty, .rs-pager a, .rs-prose pre, .rs-prose :not(pre) > code, .rs-list[data-layout="cards"] .rs-entry { border: 1px solid CanvasText; }
   .rs-chip[aria-current="page"], .rs-chip[aria-pressed="true"] { forced-color-adjust: none; border-color: Highlight; background: Highlight; color: HighlightText; }
-  .rs-entry:has(.rs-entry-link:focus-visible) { outline-color: Highlight; }
+  .rs-entry-link:focus-visible { outline-color: Highlight; }
   .rs-button { border: 1px solid ButtonText; }
 }
 @media (prefers-reduced-motion: reduce) { .rs *, .rs *::before, .rs *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
