@@ -129,9 +129,9 @@
 .rs-entry .rs-tags { order: 4; margin-top: 4px; }
 .rs-entry h2:lang(th), .rs-entry h3:lang(th) { line-height: 1.5; }
 
-/* Tags: labels, not controls (filtering happens with .rs-chip) */
+/* Tags: labels, not controls (filtering happens with .rs-chip). A long tag wraps inside its row, like a chip. */
 .rs-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.rs-tag { display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 980px; background: var(--rs-tag-bg); color: var(--rs-tag-fg); font-size: 13px; font-weight: 500; }
+.rs-tag { display: inline-flex; align-items: center; max-width: 100%; min-height: 26px; padding: 0 10px; overflow-wrap: anywhere; border-radius: 980px; background: var(--rs-tag-bg); color: var(--rs-tag-fg); font-size: 13px; font-weight: 500; }
 
 /* Empty state: says what happened and what to do next */
 .rs-empty { display: grid; justify-items: center; gap: 8px; padding: 40px 20px; border: 1px solid var(--rs-line); border-radius: 18px; background: var(--rs-surface); color: var(--rs-muted); font-size: 16px; line-height: 1.5; text-align: center; }

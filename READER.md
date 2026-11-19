@@ -33,7 +33,7 @@ not installed. Copy these four files **byte for byte** (check with `sha256sum`):
   the field's id, so the reloaded page focuses it); do the same for any other "clear" button that removes itself.
 - **Filter counts follow the search**: a chip's number is what clicking it shows, so count within the
   entries that match the current query.
-- **Chips stay on screen**: a chip never grows past its row and its label wraps. Build chips only from
+- **Chips and tags stay on screen**: a chip or tag never grows past its row and its label wraps. Build chips only from
   values the content really has, never straight from a URL parameter.
 - **Always say how many show** with `ResultCount` (a `role="status"` line), and show an `EmptyState`
   that says what to do next, different for "nothing yet" and "nothing matches" (with a way back).

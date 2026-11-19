@@ -281,11 +281,14 @@ describe("stylesheet floor", () => {
     expect(phone).toContain(".rs-back { margin-left: -8px;");
   });
 
-  it("keeps a chip inside the screen: it never grows past its row and its text wraps", () => {
+  it("keeps a chip or tag inside the screen: it never grows past its row and its text wraps", () => {
     expect(css).toMatch(/\.rs-chips li \{[^}]*max-width: 100%/);
     const chip = css.split("\n").find((line) => line.startsWith(".rs-chip {"))!;
     expect(chip).toContain("max-width: 100%");
     expect(chip).toContain("overflow-wrap: anywhere");
+    const tag = css.split("\n").find((line) => line.startsWith(".rs-tag {"))!;
+    expect(tag).toContain("max-width: 100%");
+    expect(tag).toContain("overflow-wrap: anywhere");
   });
 
   it("never sets text below 12px", () => {
