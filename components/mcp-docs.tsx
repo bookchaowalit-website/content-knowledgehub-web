@@ -20,7 +20,7 @@ export function McpDocs({ name, site, tools }: { name: string; site: string; too
       <ReaderHead
         eyebrow="For developers and AI agents"
         title="MCP API"
-        lede={`${name} answers Model Context Protocol (JSON-RPC 2.0) requests at /api/mcp. It is read-only, needs no key, and returns the same content this site shows.`}
+        lede={`${name} answers a small, MCP-style JSON-RPC 2.0 API at /api/mcp. It is read-only, needs no key, and returns the same content this site shows.`}
       />
       <Prose>
         <h2>Call it</h2>
@@ -44,6 +44,12 @@ export function McpDocs({ name, site, tools }: { name: string; site: string; too
           </table>
         </TableScroll>
         <p>The methods <code>initialize</code>, <code>tools/list</code> and <code>tools/call</code> are supported; anything else returns a JSON-RPC error.</p>
+        <h2>Not a full MCP server</h2>
+        <p>This is a custom subset of the Model Context Protocol, made for <code>curl</code> and simple scripts. An off-the-shelf MCP client may reject the replies:</p>
+        <ul>
+          <li>A <code>tools/call</code> answer returns the data itself as <code>result</code> (a list, one entry, or <code>null</code>), not in the <code>content</code> array that standard MCP clients expect.</li>
+          <li>There is no streaming or session support.</li>
+        </ul>
       </Prose>
     </>
   );

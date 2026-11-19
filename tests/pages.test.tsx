@@ -176,6 +176,14 @@ describe("follow-ups", () => {
     expect([...host.querySelectorAll("tbody code")].map((c) => c.textContent)).toEqual(["get_entries", "get_entry_by_slug", "search_entries", "get_categories"]);
     expect([...host.querySelectorAll("tbody td:last-child")].map((c) => c.textContent)).toEqual(["category (optional), limit (optional)", "category, slug", "query", "none"]);
   });
+
+  it("says /api/mcp is a custom JSON-RPC subset, not a full MCP server", () => {
+    const text = page(<McpPage />).textContent ?? "";
+    expect(text).not.toMatch(/answers Model Context Protocol/);
+    expect(text).toContain("Not a full MCP server");
+    expect(text).toContain("data itself as result");
+    expect(text).toMatch(/standard MCP\s+clients expect/);
+  });
 });
 
 describe("site files", () => {
