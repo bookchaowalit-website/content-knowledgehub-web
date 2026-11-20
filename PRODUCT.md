@@ -58,3 +58,13 @@ Live and deploy state: https://knowledgehub.bookchaowalit.com (Vercel project `b
 The Next.js security patch build was deployed by CLI on 2026-10-23 (D9a). Pushes to `main` do not deploy (the Vercel
 project is linked to the old repository name), so the category/link fix, the MCP validation and Sentry reach the live
 site only after the owner reconnects Vercel Git (D9) or approves another CLI deploy.
+
+## Known limits
+
+- `/private` documents go through the same `renderEntry()` with GFM on, so a Markdown table there becomes a `<table>`
+  without the horizontal-scroll wrapper the public reader pages have; a wide table can overflow on a phone.
+- The article renderer drops the first `# …` heading even when it differs from the page title (for example
+  `/knowledge/javascript-basics` loses "JavaScript Fundamentals").
+- Around 641–700px the site name and menu wrap to two rows while the bar stays sticky, so the two-row bar can cover the
+  search field after Clear scrolls to it. The bar is in the shared Reader shell (`app/reader-shell.css`); batched with
+  the next shell change.

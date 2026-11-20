@@ -22,9 +22,20 @@ const CATEGORIES = ['diary', 'knowledge', 'docs', 'ideas'];
 
 /** Read one entry. The folder is the source of truth for its category, whatever the frontmatter says. */
 function readEntry(category: string, slug: string): Entry {
-  const fileContents = fs.readFileSync(path.join(contentDirectory, category, `${slug}.mdx`), 'utf8');
-  const { content, data } = matter(fileContents);
-  return { slug, frontmatter: { ...(data as Frontmatter), category }, content };
+  return parseEntry(category, slug, fs.readFileSync(path.join(contentDirectory, category, `${slug}.mdx`), 'utf8'));
+}
+
+/** Parse one entry's text. YAML reads an unquoted `date: 2026-02-22` as a Date; keep it a YYYY-MM-DD string,
+ * because the shell's formatDate() slices it as text and the build would fail on a Date. */
+export function parseEntry(category: string, slug: string, text: string): Entry {
+  const { content, data } = matter(text);
+  const date: unknown = data.date;
+  const frontmatter = { ...(data as Frontmatter), category };
+  if (date instanceof Date) {
+    if (Number.isNaN(date.getTime())) delete frontmatter.date;
+    else frontmatter.date = date.toISOString().slice(0, 10);
+  }
+  return { slug, frontmatter, content };
 }
 
 function readCategory(category: string): Entry[] {

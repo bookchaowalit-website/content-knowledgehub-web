@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
-import { getEntries, getEntryBySlug, searchEntries } from '../lib/mdx.ts';
+import { getEntries, getEntryBySlug, parseEntry, searchEntries } from '../lib/mdx.ts';
 import { renderEntry } from '../lib/render-entry.ts';
 
 test('all four categories contain readable public entries with complete metadata', async () => {
@@ -49,4 +49,11 @@ test('every entry carries the category of its folder, so home links resolve', ()
   for (const category of ['knowledge', 'docs', 'ideas']) {
     assert.ok(all.filter(entry => entry.frontmatter.category === category).length >= 3, category);
   }
+});
+
+test('an unquoted YAML date (as in the README example) stays a YYYY-MM-DD string', () => {
+  const entry = parseEntry('diary', 'example', '---\ntitle: Example\ndate: 2026-02-22\n---\nBody');
+  assert.equal(entry.frontmatter.date, '2026-02-22');
+  assert.equal(typeof entry.frontmatter.date, 'string');
+  assert.equal(parseEntry('diary', 'example', '---\ntitle: Example\ndate: "2026-02-23"\n---\nBody').frontmatter.date, '2026-02-23');
 });
