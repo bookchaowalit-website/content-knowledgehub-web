@@ -6,5 +6,6 @@ export const metadata: Metadata = {
 };
 
 export default function PrivateLayout({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-gray-50">{children}</div>;
+  // kh-private (globals.css): light colour scheme and Markdown styles for this Tailwind layer only.
+  return <div className="kh-private min-h-screen bg-gray-50">{children}</div>;
 }

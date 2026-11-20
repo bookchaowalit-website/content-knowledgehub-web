@@ -10,7 +10,7 @@ set -euo pipefail
 HOME_MARKER="Bookchaowalit"
 HEALTH_PATH="/api/health"
 MAIN_ROUTE="/knowledge"
-MAIN_MARKER="Knowledge Articles"
+MAIN_MARKER="Technical patterns worth keeping"
 
 BASE="${1:?usage: deploy-smoke.sh <base-url> [expected-commit]}"
 BASE="${BASE%/}"
